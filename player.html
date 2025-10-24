@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Player</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .video-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    canvas {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+    }
+
+    #hiddenVideo {
+      display: none;
+    }
+
+    .no-video {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .no-video h2 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #94a3b8;
+    }
+
+    .no-video p {
+      color: #64748b;
+    }
+
+    .controls-panel {
+      margin-top: 20px;
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .playback-controls {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .play-pause-btn {
+      background: #8b5cf6;
+      color: white;
+      min-width: 100px;
+    }
+
+    .play-pause-btn:hover {
+      background: #7c3aed;
+    }
+
+    .download-btn {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .download-btn:hover {
+      background: #2563eb;
+    }
+
+    .delete-btn {
+      background: #ef4444;
+      color: white;
+    }
+
+    .delete-btn:hover {
+      background: #dc2626;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .timeline {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .time-display {
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      color: #cbd5e1;
+      min-width: 110px;
+    }
+
+    .progress-bar {
+      flex: 1;
+      height: 8px;
+      background: #334155;
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar:hover {
+      height: 10px;
+    }
+
+    .progress-filled {
+      height: 100%;
+      background: #8b5cf6;
+      border-radius: 4px;
+      transition: width 0.1s;
+      position: relative;
+    }
+
+    .progress-filled::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .volume-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .volume-slider {
+      width: 100px;
+      height: 6px;
+      border-radius: 3px;
+      background: #334155;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #8b5cf6;
+      cursor: pointer;
+    }
+
+    .volume-slider::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #8b5cf6;
+      cursor: pointer;
+      border: none;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    select {
+      padding: 6px 12px;
+      background: #334155;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .info-text {
+      margin-top: 10px;
+      padding: 10px;
+      background: #0f172a;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #94a3b8;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="video-container" id="videoContainer">
+      <div class="no-video" id="noVideo">
+        <h2>No Recording Available</h2>
+        <p>Record a video first using the recorder interface.</p>
+      </div>
+      <canvas id="videoCanvas" style="display: none;"></canvas>
+    </div>
+
+    <!-- Hidden video element for frame extraction -->
+    <video id="hiddenVideo"></video>
+
+    <div class="controls-panel">
+      <div class="playback-controls">
+        <button id="playPauseBtn" class="play-pause-btn" disabled>
+          <span id="playPauseIcon">▶</span>
+          <span id="playPauseText">Play</span>
+        </button>
+        <button id="downloadBtn" class="download-btn" disabled>
+          <span>⬇</span>
+          Download
+        </button>
+        <button id="deleteBtn" class="delete-btn" disabled>
+          <span>🗑</span>
+          Delete
+        </button>
+
+        <div class="volume-control">
+          <span>🔊</span>
+          <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100">
+        </div>
+
+        <div class="speed-control">
+          <label for="speedSelect">Speed:</label>
+          <select id="speedSelect">
+            <option value="0.25">0.25x</option>
+            <option value="0.5">0.5x</option>
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.25">1.25x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="time-display">
+          <span id="currentTime">00:00</span> / <span id="duration">00:00</span>
+        </div>
+        <div class="progress-bar" id="progressBar">
+          <div class="progress-filled" id="progressFilled"></div>
+        </div>
+      </div>
+
+      <div class="info-text" id="infoText">
+        Load a recording to start playing.
+      </div>
+    </div>
+  </div>
+
+  <script src="player.js"></script>
+</body>
+</html>
