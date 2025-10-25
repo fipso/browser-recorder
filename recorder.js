@@ -141,7 +141,9 @@ startBtn.addEventListener('click', async () => {
             try {
               // Start with any data already accumulated during navigation
               let allCursorData = [...cursorTrackingData];
-              console.log(`📊 Starting with ${allCursorData.length} cursor points from navigation events`);
+              console.log(
+                `📊 Starting with ${allCursorData.length} cursor points from navigation events`
+              );
 
               // If we tracked multiple tabs (window/monitor mode), collect from all
               if (recordedTabIds.length > 0) {
@@ -505,13 +507,16 @@ startBtn.addEventListener('click', async () => {
     };
 
     // Listen for navigation BEFORE it happens to collect cursor data
-    const navigationListener = (details) => {
+    const navigationListener = details => {
       const tabId = details.tabId;
-      const isTrackedTab = recordedTabIds.includes(tabId) || tabId === recordedTabId;
+      const isTrackedTab =
+        recordedTabIds.includes(tabId) || tabId === recordedTabId;
 
       // Only handle main frame navigations (not iframes)
       if (isTrackedTab && details.frameId === 0) {
-        console.log(`🔄 Tab ${tabId} is about to navigate, collecting cursor data...`);
+        console.log(
+          `🔄 Tab ${tabId} is about to navigate, collecting cursor data...`
+        );
 
         (async () => {
           try {
@@ -519,13 +524,23 @@ startBtn.addEventListener('click', async () => {
             const response = await chrome.tabs.sendMessage(tabId, {
               action: 'stopCursorTracking',
             });
-            if (response && response.cursorData && response.cursorData.length > 0) {
-              console.log(`  ✅ Collected ${response.cursorData.length} cursor points before navigation`);
+            if (
+              response &&
+              response.cursorData &&
+              response.cursorData.length > 0
+            ) {
+              console.log(
+                `  ✅ Collected ${response.cursorData.length} cursor points before navigation`
+              );
               // Merge with existing data
-              cursorTrackingData = cursorTrackingData.concat(response.cursorData);
+              cursorTrackingData = cursorTrackingData.concat(
+                response.cursorData
+              );
               // Sort by time
               cursorTrackingData.sort((a, b) => a.time - b.time);
-              console.log(`  📊 Total accumulated: ${cursorTrackingData.length} cursor points`);
+              console.log(
+                `  📊 Total accumulated: ${cursorTrackingData.length} cursor points`
+              );
             }
           } catch (error) {
             console.log(`  ℹ️ Could not collect cursor data:`, error.message);
@@ -536,10 +551,13 @@ startBtn.addEventListener('click', async () => {
 
     // Listen for page load complete to reinject script
     const tabUpdateListener = (tabId, changeInfo, tab) => {
-      const isTrackedTab = recordedTabIds.includes(tabId) || tabId === recordedTabId;
+      const isTrackedTab =
+        recordedTabIds.includes(tabId) || tabId === recordedTabId;
 
       if (isTrackedTab && changeInfo.status === 'complete') {
-        console.log(`🔄 Tab ${tabId} navigation complete, reinjecting tracking script...`);
+        console.log(
+          `🔄 Tab ${tabId} navigation complete, reinjecting tracking script...`
+        );
 
         (async () => {
           try {
@@ -611,7 +629,9 @@ function stopRecording() {
 
     // Remove navigation listener
     if (window.navigationListener) {
-      chrome.webNavigation.onBeforeNavigate.removeListener(window.navigationListener);
+      chrome.webNavigation.onBeforeNavigate.removeListener(
+        window.navigationListener
+      );
       window.navigationListener = null;
       console.log('🔴 Removed navigation listener');
     }
