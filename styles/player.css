@@ -25,17 +25,19 @@ body {
   flex-direction: column;
   padding: 20px;
   gap: 20px;
+  overflow: hidden;
 }
 
 .main-content {
   display: flex;
   justify-content: center;
   gap: 20px;
-  height: 400px;
+  flex: 1;
+  min-height: 0;
 }
 
 .video-container {
-  width: 60%;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -120,11 +122,9 @@ button:active {
 .button-actions {
   margin-left: auto;
   display: flex;
+  gap: 10px;
+  align-items: center;
 }
-
-/* .button-actions h1{
-  margin-right: 15px;
-} */
 
 .play-pause-btn:hover {
   color: grey;
@@ -151,7 +151,6 @@ button:active {
 .delete-btn {
   background: #ef4444;
   color: white;
-  margin-right: 15px;
 }
 
 .delete-btn:hover {
@@ -256,6 +255,13 @@ button:disabled {
   border-right: 2px solid #10b981;
   z-index: 5;
   cursor: move;
+  transition: all 0.2s;
+}
+
+.zoom-segment.selected {
+  background: rgba(226, 30, 128, 0.3);
+  border-left: 3px solid #e21e80;
+  border-right: 3px solid #e21e80;
 }
 
 .zoom-segment-handle {
@@ -420,7 +426,7 @@ select {
 .timeline-scale {
   height: 25px;
   position: relative;
-  border-bottom: 2px solid #334155;
+  border-bottom: 2px solid #000000;
   margin-bottom: 5px;
 }
 
@@ -429,13 +435,13 @@ select {
   bottom: 0;
   height: 8px;
   width: 1px;
-  background: #475569;
+  background: #666666;
 }
 
 .timeline-tick.major {
   height: 12px;
   width: 2px;
-  background: #64748b;
+  background: #000000;
 }
 
 .timeline-tick-label {
@@ -443,8 +449,9 @@ select {
   bottom: 14px;
   transform: translateX(-50%);
   font-size: 10px;
-  color: #94a3b8;
+  color: #000000;
   font-family: 'Courier New', monospace;
+  font-weight: 600;
   white-space: nowrap;
   pointer-events: none;
 }
@@ -480,11 +487,12 @@ select {
 
 /* Effect Properties Panel */
 .effect-properties {
-  margin-top: 15px;
+  width: 300px;
   padding: 15px;
   background: #dddddd;
   border-radius: 6px;
   border: 1px solid #aeaeae;
+  overflow-y: auto;
 }
 
 .effect-properties h4 {

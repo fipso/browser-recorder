@@ -1129,6 +1129,16 @@ function selectSegment(segmentId) {
   selectedSegmentId = segmentId;
   renderZoomSegments(); // Re-render to show selection
   updatePropertiesPanel();
+
+  // Reset zoom to show unzoomed canvas for easier manual positioning
+  currentZoom.scale = 1;
+  currentZoom.x = hiddenVideo.videoWidth / 2;
+  currentZoom.y = hiddenVideo.videoHeight / 2;
+
+  // Redraw canvas immediately
+  if (hiddenVideo.readyState >= 2) {
+    drawVideoWithZoom(ctx, canvas, hiddenVideo, currentZoom);
+  }
 }
 
 // Deselect current segment

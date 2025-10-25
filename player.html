@@ -59,96 +59,6 @@
 
         <!-- Hidden video element for frame extraction -->
         <video id="hiddenVideo"></video>
-      </div>
-
-      <div class="timeline-editor">
-        <div class="timeline-controls">
-          <div class="timeline-control">
-            <button id="playPauseBtn" class="play-pause-btn" disabled>
-              <h1 id="playPauseIcon">▶</h1>
-            </button>
-
-            <div class="timeline-time-display">
-              <div class="time-display">
-                <h3 id="currentTime">00:00</h3>
-              </div>
-              /
-              <div class="time-display">
-                <h3 id="duration">00:00</h3>
-              </div>
-            </div>
-          </div>
-
-          <div class="timeline-control">
-            <div class="volume-control">
-              <span>
-                <h1 class="bi bi-volume-up-fill"></h1>
-              </span>
-              <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100" />
-            </div>
-          </div>
-
-          <div class="timeline-control">
-            <div class="speed-control">
-              <label for="speedSelect">
-                <h1 class="bi bi-speedometer"></h1>
-              </label>
-              <select id="speedSelect">
-                <option value="0.25">0.25x</option>
-                <option value="0.5">0.5x</option>
-                <option value="0.75">0.75x</option>
-                <option value="1" selected>1x</option>
-                <option value="1.25">1.25x</option>
-                <option value="1.5">1.5x</option>
-                <option value="2">2x</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="timeline-control">
-            <!-- Export Settings -->
-            <div class="export-settings-inline">
-              <label for="exportFps">FPS:</label>
-              <select id="exportFps">
-                <option value="24">24</option>
-                <option value="30" selected>30</option>
-                <option value="60">60</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="timeline-control">
-            <div class="export-settings-inline">
-              <label for="exportBitrate">Quality:</label>
-              <select id="exportBitrate">
-                <option value="2500000">2.5</option>
-                <option value="5000000" selected>5</option>
-                <option value="8000000">8</option>
-                <option value="10000000">10</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="button-actions">
-            <button id="exportBtn" class="export-btn" disabled>
-              <h1 class="bi bi-film"></h1>
-            </button>
-
-            <button id="deleteBtn" class="delete-btn" disabled>
-              <h1 class="bi bi-trash3-fill"></h1>
-            </button>
-
-            <button id="downloadBtn" class="download-btn" disabled>
-              <h1 class="bi bi-cloud-download-fill"></h1>
-            </button>
-          </div>
-        </div>
-
-        <div class="timeline-controls">
-          <button class="add-zoom-btn" id="addZoomBtn">+ Add Zoom Effect</button>
-          <div class="info-text" id="infoText">Load a recording to start playing.</div>
-          <div class="debug-info" id="debugInfo"></div>
-        </div>
 
         <!-- Effect Properties Panel -->
         <div class="effect-properties" id="effectProperties" style="display: none">
@@ -183,6 +93,66 @@
           </div>
           <button id="deleteEffectBtn" class="delete-effect-btn">Delete Effect</button>
         </div>
+      </div>
+
+      <div class="timeline-editor">
+        <div class="timeline-controls">
+          <div class="timeline-control">
+            <button id="playPauseBtn" class="play-pause-btn" disabled>
+              <h1 id="playPauseIcon">▶</h1>
+            </button>
+
+            <div class="timeline-time-display">
+              <div class="time-display">
+                <h3 id="currentTime">00:00</h3>
+              </div>
+              /
+              <div class="time-display">
+                <h3 id="duration">00:00</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="button-actions">
+            <!-- Export Settings -->
+            <div class="export-settings-inline">
+              <label for="exportFps">FPS:</label>
+              <select id="exportFps">
+                <option value="24">24</option>
+                <option value="30" selected>30</option>
+                <option value="60">60</option>
+              </select>
+            </div>
+
+            <div class="export-settings-inline">
+              <label for="exportBitrate">Bitrate:</label>
+              <select id="exportBitrate">
+                <option value="2500000">2.5 Mbps</option>
+                <option value="5000000" selected>5 Mbps</option>
+                <option value="8000000">8 Mbps</option>
+                <option value="10000000">10 Mbps</option>
+              </select>
+            </div>
+
+            <button id="exportBtn" class="export-btn" disabled>
+              <h1 class="bi bi-film"></h1>
+            </button>
+
+            <button id="downloadBtn" class="download-btn" disabled>
+              <h1 class="bi bi-cloud-download-fill"></h1>
+            </button>
+
+            <button id="deleteBtn" class="delete-btn" disabled>
+              <h1 class="bi bi-trash3-fill"></h1>
+            </button>
+          </div>
+        </div>
+
+        <div class="timeline-controls">
+          <button class="add-zoom-btn" id="addZoomBtn">+ Add Zoom Effect</button>
+          <div class="info-text" id="infoText">Load a recording to start playing.</div>
+          <div class="debug-info" id="debugInfo"></div>
+        </div>
 
         <span id="debug-consoles" class="hidden">
           <div class="debug-panel" id="debugPanel"></div>
@@ -211,12 +181,6 @@
       </div>
     </div>
 
-    <span id="debug-consoles" class="hidden">
-      <label class="debug-toggle">
-        <input type="checkbox" id="debugModeToggle" />
-        Debug Mode
-      </label>
-    </span>
     <script src="player.js"></script>
   </body>
 </html>
