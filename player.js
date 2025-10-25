@@ -126,7 +126,10 @@ function renderFrame() {
   const activeZoom = getActiveZoomSegment(currentTime);
 
   if (activeZoom) {
-    currentZoom.scale = activeZoom.zoomLevel || 2;
+    // Smoothly transition to target zoom level
+    const targetScale = activeZoom.zoomLevel || 2;
+    const zoomSpeed = 0.15; // Higher = faster zoom in/out
+    currentZoom.scale += (targetScale - currentZoom.scale) * zoomSpeed;
 
     if (activeZoom.mode === 'manual') {
       // Manual mode: use specified position (percentage of video)
@@ -206,8 +209,9 @@ function renderFrame() {
 
     ctx.restore();
   } else {
-    // Reset zoom smoothly
-    currentZoom.scale += (1 - currentZoom.scale) * 0.1;
+    // Reset zoom smoothly (zoom out)
+    const zoomSpeed = 0.15; // Same speed as zoom in
+    currentZoom.scale += (1 - currentZoom.scale) * zoomSpeed;
 
     if (Math.abs(currentZoom.scale - 1) < 0.01) {
       currentZoom.scale = 1;
