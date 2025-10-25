@@ -17,11 +17,17 @@ const timelineTrack = document.getElementById('timelineTrack');
 const playhead = document.getElementById('playhead');
 const playheadHandle = document.getElementById('playheadHandle');
 const playheadTime = document.getElementById('playheadTime');
+const addZoomBtn = document.getElementById('addZoomBtn');
+const debugInfo = document.getElementById('debugInfo');
+const debugPanel = document.getElementById('debugPanel');
 
 let videoDataUrl = null;
 let isPlaying = false;
 let animationFrameId = null;
 let actualDuration = null; // Duration from recording timestamps
+let cursorData = []; // Cursor position data from recording
+let zoomSegments = []; // Array of zoom effects: {start, end, zoomLevel}
+let currentZoom = { scale: 1, x: 0, y: 0, targetX: 0, targetY: 0 }; // Current zoom state with smoothing
 
 // Format time helper
 function formatTime(seconds) {
@@ -33,23 +39,152 @@ function formatTime(seconds) {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
+// Get cursor position at a specific time with interpolation
+function getCursorAtTime(time) {
+  if (cursorData.length === 0) return null;
+
+  // Find surrounding cursor data points
+  let before = null;
+  let after = null;
+
+  for (let i = 0; i < cursorData.length; i++) {
+    if (cursorData[i].time <= time) {
+      before = cursorData[i];
+    }
+    if (cursorData[i].time >= time && !after) {
+      after = cursorData[i];
+      break;
+    }
+  }
+
+  if (!before) return cursorData[0];
+  if (!after) return cursorData[cursorData.length - 1];
+  if (before === after) return before;
+
+  // Interpolate between points
+  const ratio = (time - before.time) / (after.time - before.time);
+  return {
+    x: before.x + (after.x - before.x) * ratio,
+    y: before.y + (after.y - before.y) * ratio,
+  };
+}
+
+// Check if current time is in a zoom segment
+function getActiveZoomSegment(time) {
+  return zoomSegments.find(seg => time >= seg.start && time <= seg.end);
+}
+
 // Render video frame to canvas
 function renderFrame() {
   if (!isPlaying || hiddenVideo.paused || hiddenVideo.ended) {
     return;
   }
 
-  // Draw current video frame to canvas
-  ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
+  const currentTime = hiddenVideo.currentTime;
+
+  // Check if we should apply zoom
+  const activeZoom = getActiveZoomSegment(currentTime);
+
+  if (activeZoom) {
+    // Apply zoom with cursor following
+    const cursor = getCursorAtTime(currentTime);
+
+    if (!cursor) {
+      console.warn('Active zoom but no cursor data at', currentTime);
+    }
+
+    if (cursor) {
+      // Update target position based on cursor
+      currentZoom.targetX = cursor.x;
+      currentZoom.targetY = cursor.y;
+      currentZoom.scale = activeZoom.zoomLevel || 2;
+
+      // Smooth camera movement - only move if cursor moved significantly
+      const distanceX = Math.abs(currentZoom.targetX - currentZoom.x);
+      const distanceY = Math.abs(currentZoom.targetY - currentZoom.y);
+      const threshold = 50; // Minimum movement before camera follows
+
+      if (distanceX > threshold || distanceY > threshold) {
+        // Lerp towards target with smoothing factor
+        const smoothFactor = 0.1;
+        currentZoom.x += (currentZoom.targetX - currentZoom.x) * smoothFactor;
+        currentZoom.y += (currentZoom.targetY - currentZoom.y) * smoothFactor;
+      }
+    }
+
+    // Draw zoomed frame
+    ctx.save();
+
+    // Clear canvas
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Calculate zoom viewport
+    const zoomedWidth = canvas.width / currentZoom.scale;
+    const zoomedHeight = canvas.height / currentZoom.scale;
+
+    // Center on cursor position, but clamp to video bounds
+    let sourceX = currentZoom.x - zoomedWidth / 2;
+    let sourceY = currentZoom.y - zoomedHeight / 2;
+
+    sourceX = Math.max(0, Math.min(hiddenVideo.videoWidth - zoomedWidth, sourceX));
+    sourceY = Math.max(0, Math.min(hiddenVideo.videoHeight - zoomedHeight, sourceY));
+
+    // Draw the zoomed portion
+    ctx.drawImage(
+      hiddenVideo,
+      sourceX,
+      sourceY,
+      zoomedWidth,
+      zoomedHeight,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    ctx.restore();
+  } else {
+    // Reset zoom smoothly
+    currentZoom.scale += (1 - currentZoom.scale) * 0.1;
+
+    if (Math.abs(currentZoom.scale - 1) < 0.01) {
+      currentZoom.scale = 1;
+      // Draw normal frame
+      ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
+    } else {
+      // Still transitioning out of zoom
+      const zoomedWidth = canvas.width / currentZoom.scale;
+      const zoomedHeight = canvas.height / currentZoom.scale;
+
+      let sourceX = currentZoom.x - zoomedWidth / 2;
+      let sourceY = currentZoom.y - zoomedHeight / 2;
+
+      sourceX = Math.max(0, Math.min(hiddenVideo.videoWidth - zoomedWidth, sourceX));
+      sourceY = Math.max(0, Math.min(hiddenVideo.videoHeight - zoomedHeight, sourceY));
+
+      ctx.drawImage(
+        hiddenVideo,
+        sourceX,
+        sourceY,
+        zoomedWidth,
+        zoomedHeight,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+    }
+  }
 
   // Update time display
-  currentTimeDisplay.textContent = formatTime(hiddenVideo.currentTime);
-  playheadTime.textContent = formatTime(hiddenVideo.currentTime);
+  currentTimeDisplay.textContent = formatTime(currentTime);
+  playheadTime.textContent = formatTime(currentTime);
 
   // Update playhead position
   const duration = actualDuration || hiddenVideo.duration;
   if (isFinite(duration) && duration > 0) {
-    const progress = (hiddenVideo.currentTime / duration) * 100;
+    const progress = (currentTime / duration) * 100;
     playhead.style.left = `${progress}%`;
   }
 
@@ -57,10 +192,42 @@ function renderFrame() {
   animationFrameId = requestAnimationFrame(renderFrame);
 }
 
+// Update debug display
+function updateDebugInfo() {
+  debugInfo.textContent = `Cursor: ${cursorData.length} pts | Zooms: ${zoomSegments.length}`;
+
+  let debugHTML = '<h4>Debug Info</h4>';
+  debugHTML += `<div>Cursor data points: ${cursorData.length}</div>`;
+  debugHTML += `<div>Zoom segments: ${zoomSegments.length}</div>`;
+
+  if (cursorData.length > 0) {
+    debugHTML += `<div>First cursor: t=${cursorData[0].time.toFixed(2)}s, x=${cursorData[0].x}, y=${cursorData[0].y}</div>`;
+    debugHTML += `<div>Last cursor: t=${cursorData[cursorData.length - 1].time.toFixed(2)}s</div>`;
+  }
+
+  if (zoomSegments.length > 0) {
+    debugHTML += '<div style="margin-top: 5px;">Zoom segments:</div>';
+    zoomSegments.forEach((seg, idx) => {
+      debugHTML += `<div>  ${idx + 1}. ${seg.start.toFixed(2)}s - ${seg.end.toFixed(2)}s (${seg.zoomLevel}x)</div>`;
+    });
+  }
+
+  const activeZoom = getActiveZoomSegment(hiddenVideo.currentTime);
+  if (activeZoom) {
+    debugHTML += `<div style="margin-top: 5px; color: #10b981;">ACTIVE ZOOM: ${activeZoom.zoomLevel}x at ${hiddenVideo.currentTime.toFixed(2)}s</div>`;
+    const cursor = getCursorAtTime(hiddenVideo.currentTime);
+    if (cursor) {
+      debugHTML += `<div style="color: #10b981;">Cursor pos: x=${Math.round(cursor.x)}, y=${Math.round(cursor.y)}</div>`;
+    }
+  }
+
+  debugPanel.innerHTML = debugHTML;
+}
+
 // Load video from storage
 function loadVideo() {
   chrome.storage.local.get(
-    ['recordedVideo', 'timestamp', 'recordingDuration'],
+    ['recordedVideo', 'timestamp', 'recordingDuration', 'cursorData', 'zoomSegments'],
     result => {
       if (result.recordedVideo) {
         videoDataUrl = result.recordedVideo;
@@ -77,15 +244,43 @@ function loadVideo() {
           );
         }
 
+        // Load cursor data
+        if (result.cursorData && result.cursorData.length > 0) {
+          cursorData = result.cursorData;
+          console.log('Loaded cursor data:', cursorData.length, 'points');
+        } else {
+          cursorData = [];
+          console.warn('No cursor data available');
+        }
+
+        // Load zoom segments (only if video matches)
+        if (result.zoomSegments && result.zoomSegments.length > 0) {
+          zoomSegments = result.zoomSegments;
+          renderZoomSegments();
+          console.log('Loaded zoom segments:', zoomSegments.length);
+        } else {
+          zoomSegments = [];
+        }
+
+        // Update debug info
+        updateDebugInfo();
+
+        // Update debug info periodically during playback
+        setInterval(updateDebugInfo, 500);
+
         // Enable controls
         playPauseBtn.disabled = false;
         downloadBtn.disabled = false;
         deleteBtn.disabled = false;
+        addZoomBtn.disabled = false;
 
         const date = new Date(result.timestamp);
         infoText.textContent = `Recording from ${date.toLocaleString()}`;
       } else {
         infoText.textContent = 'No recording available. Record a video first.';
+        cursorData = [];
+        zoomSegments = [];
+        updateDebugInfo();
       }
     }
   );
@@ -224,21 +419,37 @@ downloadBtn.addEventListener('click', () => {
 // Delete button
 deleteBtn.addEventListener('click', () => {
   if (confirm('Are you sure you want to delete this recording?')) {
-    chrome.storage.local.remove(['recordedVideo', 'timestamp'], () => {
-      hiddenVideo.src = '';
-      canvas.style.display = 'none';
-      noVideo.style.display = 'block';
-      playPauseBtn.disabled = true;
-      downloadBtn.disabled = true;
-      deleteBtn.disabled = true;
-      infoText.textContent = 'Recording deleted.';
-      videoDataUrl = null;
-      isPlaying = false;
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
+    chrome.storage.local.remove(
+      [
+        'recordedVideo',
+        'timestamp',
+        'recordingDuration',
+        'recordingStartTime',
+        'recordingEndTime',
+        'cursorData',
+        'zoomSegments',
+      ],
+      () => {
+        hiddenVideo.src = '';
+        canvas.style.display = 'none';
+        noVideo.style.display = 'block';
+        playPauseBtn.disabled = true;
+        downloadBtn.disabled = true;
+        deleteBtn.disabled = true;
+        addZoomBtn.disabled = true;
+        infoText.textContent = 'Recording deleted.';
+        videoDataUrl = null;
+        isPlaying = false;
+        cursorData = [];
+        zoomSegments = [];
+        renderZoomSegments(); // Clear visual segments
+        updateDebugInfo();
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
       }
-    });
+    );
   }
 });
 
@@ -295,6 +506,87 @@ document.addEventListener('keydown', e => {
     }
   }
 });
+
+// Add zoom segment
+addZoomBtn.addEventListener('click', () => {
+  const currentTime = hiddenVideo.currentTime;
+  const duration = actualDuration || hiddenVideo.duration;
+
+  if (!isFinite(duration)) {
+    alert('Please load a video first');
+    return;
+  }
+
+  // Create a 3-second zoom segment starting at current time
+  const newSegment = {
+    start: currentTime,
+    end: Math.min(currentTime + 3, duration),
+    zoomLevel: 2,
+    id: Date.now(),
+  };
+
+  zoomSegments.push(newSegment);
+  saveZoomSegments();
+  renderZoomSegments();
+  updateDebugInfo();
+
+  console.log('Added zoom segment:', newSegment);
+});
+
+// Render zoom segments on timeline
+function renderZoomSegments() {
+  // Remove existing segments
+  document.querySelectorAll('.zoom-segment').forEach(el => el.remove());
+
+  const duration = actualDuration || hiddenVideo.duration;
+  if (!isFinite(duration) || duration <= 0) return;
+
+  zoomSegments.forEach(segment => {
+    const segmentEl = document.createElement('div');
+    segmentEl.className = 'zoom-segment';
+    segmentEl.dataset.segmentId = segment.id;
+
+    const startPercent = (segment.start / duration) * 100;
+    const widthPercent = ((segment.end - segment.start) / duration) * 100;
+
+    segmentEl.style.left = `${startPercent}%`;
+    segmentEl.style.width = `${widthPercent}%`;
+
+    // Add label
+    const label = document.createElement('div');
+    label.className = 'zoom-segment-label';
+    label.textContent = `${segment.zoomLevel}x`;
+    segmentEl.appendChild(label);
+
+    // Add handles for resizing
+    const leftHandle = document.createElement('div');
+    leftHandle.className = 'zoom-segment-handle left';
+    segmentEl.appendChild(leftHandle);
+
+    const rightHandle = document.createElement('div');
+    rightHandle.className = 'zoom-segment-handle right';
+    segmentEl.appendChild(rightHandle);
+
+    timelineTrack.appendChild(segmentEl);
+
+    // Add drag handlers (simplified for now - you can enhance this)
+    segmentEl.addEventListener('dblclick', () => {
+      if (confirm(`Delete this zoom effect (${segment.zoomLevel}x)?`)) {
+        zoomSegments = zoomSegments.filter(s => s.id !== segment.id);
+        saveZoomSegments();
+        renderZoomSegments();
+        updateDebugInfo();
+      }
+    });
+  });
+}
+
+// Save zoom segments to storage
+function saveZoomSegments() {
+  chrome.storage.local.set({ zoomSegments: zoomSegments }, () => {
+    console.log('Zoom segments saved');
+  });
+}
 
 // Load video on page load
 loadVideo();

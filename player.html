@@ -173,6 +173,103 @@
         gap: 20px;
       }
 
+      .timeline-controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        align-items: center;
+      }
+
+      .debug-info {
+        margin-left: auto;
+        font-size: 12px;
+        color: #94a3b8;
+        font-family: 'Courier New', monospace;
+      }
+
+      .debug-panel {
+        background: #0f172a;
+        border-radius: 6px;
+        padding: 10px;
+        margin-top: 10px;
+        font-size: 11px;
+        font-family: 'Courier New', monospace;
+        color: #94a3b8;
+        max-height: 150px;
+        overflow-y: auto;
+      }
+
+      .debug-panel h4 {
+        margin: 0 0 5px 0;
+        color: #cbd5e1;
+        font-size: 12px;
+      }
+
+      .debug-panel pre {
+        margin: 5px 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .add-zoom-btn {
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: #10b981;
+        color: white;
+      }
+
+      .add-zoom-btn:hover {
+        background: #059669;
+        transform: translateY(-1px);
+      }
+
+      .zoom-segment {
+        position: absolute;
+        top: 0;
+        height: 100%;
+        background: rgba(16, 185, 129, 0.2);
+        border-left: 2px solid #10b981;
+        border-right: 2px solid #10b981;
+        z-index: 5;
+        cursor: move;
+      }
+
+      .zoom-segment-handle {
+        position: absolute;
+        top: 0;
+        width: 8px;
+        height: 100%;
+        background: #10b981;
+        cursor: ew-resize;
+        z-index: 6;
+      }
+
+      .zoom-segment-handle.left {
+        left: -4px;
+      }
+
+      .zoom-segment-handle.right {
+        right: -4px;
+      }
+
+      .zoom-segment-label {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        background: #10b981;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: 600;
+        pointer-events: none;
+      }
+
       .playhead {
         position: absolute;
         top: 0;
@@ -383,6 +480,11 @@
             <div class="time-display">Duration: <span id="duration">00:00</span></div>
           </div>
         </div>
+        <div class="timeline-controls">
+          <button class="add-zoom-btn" id="addZoomBtn">+ Add Zoom Effect</button>
+          <div class="debug-info" id="debugInfo"></div>
+        </div>
+        <div class="debug-panel" id="debugPanel"></div>
         <div class="timeline-track" id="timelineTrack">
           <div class="playhead" id="playhead">
             <div class="playhead-handle" id="playheadHandle">

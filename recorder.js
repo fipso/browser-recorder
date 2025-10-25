@@ -4,6 +4,8 @@ let recordedChunks = [];
 let stream = null;
 let startTime = null;
 let timerInterval = null;
+let recordedTabId = null;
+let cursorTrackingData = [];
 
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -26,6 +28,14 @@ ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 startBtn.addEventListener('click', async () => {
   try {
+    // Clear old recording data including zoom segments
+    chrome.storage.local.remove(
+      ['recordedVideo', 'timestamp', 'recordingDuration', 'recordingStartTime', 'recordingEndTime', 'cursorData', 'zoomSegments'],
+      () => {
+        console.log('Cleared old recording data');
+      }
+    );
+
     // Request screen capture
     stream = await navigator.mediaDevices.getDisplayMedia({
       video: {
@@ -83,26 +93,52 @@ startBtn.addEventListener('click', async () => {
       const blob = new Blob(recordedChunks, { type: 'video/webm' });
       const endTime = Date.now();
 
-      // Save to chrome.storage
+      // Save video immediately, get cursor data in background
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64data = reader.result;
-        chrome.storage.local.set(
-          {
-            recordedVideo: base64data,
-            timestamp: endTime,
-            recordingStartTime: startTime,
-            recordingEndTime: endTime,
-            recordingDuration: (endTime - startTime) / 1000, // Duration in seconds
-          },
-          () => {
-            console.log('Video saved to storage');
-            downloadBtn.disabled = false;
-            playBtn.disabled = false;
-            infoElement.textContent =
-              'Recording saved! You can download it or open it in the player.';
-          }
-        );
+
+        // Save video data first
+        const videoData = {
+          recordedVideo: base64data,
+          timestamp: endTime,
+          recordingStartTime: startTime,
+          recordingEndTime: endTime,
+          recordingDuration: (endTime - startTime) / 1000, // Duration in seconds
+          cursorData: [], // Will be updated if cursor tracking succeeds
+        };
+
+        chrome.storage.local.set(videoData, () => {
+          console.log('Video saved to storage');
+          downloadBtn.disabled = false;
+          playBtn.disabled = false;
+          infoElement.textContent =
+            'Recording saved! You can download it or open it in the player.';
+        });
+
+        // Get cursor tracking data in background (non-blocking)
+        if (recordedTabId) {
+          (async () => {
+            try {
+              const response = await chrome.tabs.sendMessage(recordedTabId, {
+                action: 'stopCursorTracking',
+              });
+              if (response && response.cursorData) {
+                cursorTrackingData = response.cursorData;
+                console.log('Collected cursor data:', cursorTrackingData.length, 'points');
+
+                // Update storage with cursor data
+                chrome.storage.local.set({ cursorData: cursorTrackingData }, () => {
+                  console.log('Cursor data saved to storage');
+                  infoElement.textContent =
+                    `Recording saved with ${cursorTrackingData.length} cursor points! You can download it or open it in the player.`;
+                });
+              }
+            } catch (error) {
+              console.warn('Could not get cursor tracking data:', error);
+            }
+          })();
+        }
       };
       reader.readAsDataURL(blob);
 
@@ -124,14 +160,123 @@ startBtn.addEventListener('click', async () => {
     startTime = Date.now();
     startTimer();
 
-    // Update UI
+    // Update UI immediately
     startBtn.disabled = true;
     stopBtn.disabled = false;
     statusText.textContent = 'Recording';
     recordingIndicator.style.display = 'block';
     timerElement.style.display = 'block';
-    infoElement.textContent =
-      'Recording in progress... Click "Stop Recording" when done.';
+    infoElement.textContent = 'Recording in progress...';
+
+    // Start cursor tracking in background (non-blocking)
+    (async () => {
+      try {
+        // Try to detect which tab/window is being shared
+        const videoTrack = stream.getVideoTracks()[0];
+        const settings = videoTrack.getSettings();
+
+        console.log('Stream settings:', settings);
+
+        // Try to find the tab that matches the shared content
+        let targetTab = null;
+
+        // If sharing a specific tab, Chrome might tell us
+        if (settings.displaySurface === 'browser') {
+          console.log('Sharing a browser tab');
+
+          // Get the active tab as best guess
+          const activeTabs = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (activeTabs.length > 0) {
+            targetTab = activeTabs[0];
+            console.log('Using active tab:', targetTab.title);
+          }
+        } else {
+          console.log('Sharing window/monitor - will use active tab as fallback');
+          // For window/monitor sharing, we can't detect automatically
+          // Use the currently active tab as best guess
+          const activeTabs = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (activeTabs.length > 0) {
+            targetTab = activeTabs[0];
+            console.log('Using active tab as fallback:', targetTab.title);
+          }
+        }
+
+        // If no target found, fall back to first web tab
+        if (!targetTab) {
+          const allTabs = await chrome.tabs.query({});
+          const webTabs = allTabs.filter(
+            tab => tab.url && (tab.url.startsWith('http://') || tab.url.startsWith('https://'))
+          );
+          if (webTabs.length > 0) {
+            targetTab = webTabs[0];
+            console.log('Fallback to first web tab:', targetTab.title);
+          }
+        }
+
+        if (targetTab) {
+          recordedTabId = targetTab.id;
+
+          try {
+            // Try to inject/ensure content script is loaded
+            console.log('Injecting content script into tab:', targetTab.id);
+            try {
+              await chrome.scripting.executeScript({
+                target: { tabId: recordedTabId },
+                files: ['content.js']
+              });
+              console.log('Content script injected');
+            } catch (injectError) {
+              // Script might already be injected, that's ok
+              console.log('Content script already loaded or inject failed:', injectError.message);
+            }
+
+            // Wait for content script to fully initialize
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Retry ping a few times to make sure it's ready
+            let retries = 5;
+            let scriptReady = false;
+
+            while (retries > 0 && !scriptReady) {
+              try {
+                const pingResponse = await chrome.tabs.sendMessage(recordedTabId, {
+                  action: 'ping'
+                });
+                if (pingResponse && pingResponse.status === 'ready') {
+                  scriptReady = true;
+                  break;
+                }
+              } catch (e) {
+                console.log('Ping failed, retrying...', retries);
+              }
+              retries--;
+              await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            if (scriptReady) {
+              // Content script is ready, start tracking
+              const trackingResponse = await chrome.tabs.sendMessage(recordedTabId, {
+                action: 'startCursorTracking'
+              });
+
+              console.log('Started cursor tracking in tab:', targetTab.title, trackingResponse);
+              infoElement.textContent = `Recording... (🔴 Tracking cursor in: ${targetTab.title || 'Untitled'})`;
+            } else {
+              throw new Error('Content script not responding after retries');
+            }
+          } catch (tabError) {
+            console.error('Failed to start tracking in tab:', tabError);
+            infoElement.textContent = `Recording... (Cursor tracking unavailable - ${tabError.message})`;
+          }
+        } else {
+          console.warn('No web tabs found to track cursor');
+          infoElement.textContent = 'Recording... (No cursor tracking - no web tabs open)';
+        }
+      } catch (error) {
+        console.warn('Could not start cursor tracking:', error);
+        infoElement.textContent = `Recording in progress...`;
+      }
+    })();
 
     // Handle stream ending (user clicks "Stop sharing" in browser)
     stream.getVideoTracks()[0].onended = () => {
