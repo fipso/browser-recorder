@@ -8,11 +8,11 @@ body {
   flex-direction: column;
 }
 
-.timeline-control{
-  display:flex;
+.timeline-control {
+  display: flex;
   justify-content: center;
   align-items: center;
-  margin-right:25px;
+  margin-right: 25px;
 }
 
 .container {
@@ -105,15 +105,15 @@ button:active {
 }
 
 .play-pause-btn {
-  background: none; 
-  border: none; 
+  background: none;
+  border: none;
   color: inherit;
   color: #000000;
 }
 
-.button-actions{
-  margin-left:auto;
-  display:flex;
+.button-actions {
+  margin-left: auto;
+  display: flex;
 }
 
 /* .button-actions h1{
@@ -136,7 +136,7 @@ button:active {
 .delete-btn {
   background: #ef4444;
   color: white;
-  margin-right:15px;
+  margin-right: 15px;
 }
 
 .delete-btn:hover {
@@ -192,7 +192,7 @@ button:disabled {
 }
 
 .debug-panel {
-  background: ##AEAEAE;
+  background: ##aeaeae;
   border-radius: 6px;
   padding: 10px;
   margin-top: 10px;
@@ -280,7 +280,7 @@ button:disabled {
   left: 0;
   width: 2px;
   height: 100%;
-  background: #E21E80;
+  background: #e21e80;
   z-index: 10;
   pointer-events: none;
 }
@@ -292,7 +292,7 @@ button:disabled {
   transform: translateX(-50%);
   width: 16px;
   height: 16px;
-  background: #E21E80;
+  background: #e21e80;
   border: 2px solid #fff;
   border-radius: 50%;
   cursor: grab;
@@ -309,7 +309,7 @@ button:disabled {
   top: -30px;
   left: 50%;
   transform: translateX(-50%);
-  background: #E21E80;
+  background: #e21e80;
   color: white;
   padding: 4px 8px;
   border-radius: 4px;
@@ -332,7 +332,7 @@ button:disabled {
   flex: 1;
   height: 6px;
   border-radius: 3px;
-  background: #AEAEAE;
+  background: #aeaeae;
   outline: none;
   -webkit-appearance: none;
   appearance: none;
@@ -344,7 +344,7 @@ button:disabled {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #E21E80;
+  background: #e21e80;
   cursor: pointer;
 }
 
@@ -352,7 +352,7 @@ button:disabled {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #E21E80;
+  background: #e21e80;
   cursor: pointer;
   border: none;
 }
@@ -368,7 +368,7 @@ button:disabled {
 select {
   flex: 1;
   padding: 6px 12px;
-  background: #AEAEAE;
+  background: #aeaeae;
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -386,14 +386,14 @@ select {
 }
 
 .timeline-editor {
-  background: #DDDDDD;
+  background: #dddddd;
   border-radius: 8px;
   padding: 20px;
   min-height: 200px;
 }
 
 .timeline-track {
-  background: #AEAEAE;
+  background: #aeaeae;
   border-radius: 6px;
   padding: 15px;
   min-height: 120px;

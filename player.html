@@ -1,18 +1,17 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Video Player</title>
-    <link rel="stylesheet" href="styles/shared.css"/>
-    <link rel="stylesheet" href="styles/player.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
-
+    <link rel="stylesheet" href="styles/shared.css" />
+    <link rel="stylesheet" href="styles/player.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
   </head>
   <body>
     <div class="container">
       <div class="header-left">
-        <img src="./icons/logo.png" alt="Browser Recorder"/>
+        <img src="./icons/logo.png" alt="Browser Recorder" />
         <h1>Browser Recorder</h1>
       </div>
       <div class="main-content">
@@ -40,7 +39,7 @@
 
             <div class="volume-control">
               <span>🔊</span>
-              <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100"/>
+              <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100" />
             </div>
 
             <div class="speed-control">
@@ -62,17 +61,13 @@
       </div>
 
       <div class="timeline-editor">
-
         <div class="timeline-controls">
-
           <div class="timeline-control">
-
             <button id="playPauseBtn" class="play-pause-btn" disabled>
               <h1 id="playPauseIcon">▶</h1>
             </button>
 
             <div class="timeline-time-display">
-
               <div class="time-display">
                 <h3 id="currentTime">00:00</h3>
               </div>
@@ -81,7 +76,6 @@
                 <h3 id="duration">00:00</h3>
               </div>
             </div>
-
           </div>
 
           <div class="timeline-control">
@@ -89,12 +83,11 @@
               <span>
                 <h1 class="bi bi-volume-up-fill"></h1>
               </span>
-              <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100"/>
+              <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100" />
             </div>
           </div>
 
           <div class="timeline-control">
-
             <div class="speed-control">
               <label for="speedSelect">
                 <h1 class="bi bi-speedometer"></h1>
@@ -112,23 +105,20 @@
           </div>
 
           <div class="button-actions">
-
             <button id="deleteBtn" class="delete-btn" disabled>
               <h1 class="bi bi-trash3-fill"></h1>
             </button>
 
             <button id="downloadBtn" class="download-btn" disabled>
-               <h1 class="bi bi-cloud-download-fill"></h1>
+              <h1 class="bi bi-cloud-download-fill"></h1>
             </button>
-
           </div>
-          
         </div>
 
-        <hr/>
+        <hr />
 
-        <br>
-        
+        <br />
+
         <div class="timeline-editor-header">
           <h1>Timeline Editor</h1>
         </div>
