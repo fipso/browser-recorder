@@ -13,23 +13,21 @@
 
       body {
         width: 320px;
-        padding: 20px;
+        padding: 10px 20px;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: #fff;
+        background: #ffffff;
+        color: #000000;
       }
 
       h1 {
         font-size: 20px;
-        margin-bottom: 15px;
         text-align: center;
         font-weight: 600;
       }
 
       .description {
         font-size: 13px;
-        color: rgba(255, 255, 255, 0.9);
-        margin-bottom: 20px;
+        margin-top: 20px;
         text-align: center;
         line-height: 1.5;
       }
@@ -45,25 +43,29 @@
         font-size: 15px;
         font-weight: 600;
         border: none;
-        border-radius: 8px;
+        border-radius: 10px;
         cursor: pointer;
         transition: all 0.2s;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
-        background: rgba(255, 255, 255, 0.95);
-        color: #667eea;
+        background: #dddddd;
+        color: #6610f2;
       }
 
       button:hover {
-        background: #fff;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       }
 
       button:active {
         transform: translateY(0);
+      }
+
+      .button-primary {
+        background: #e21e80;
+        color: #ffffff;
       }
 
       .icon {
@@ -74,6 +76,12 @@
         height: 1px;
         background: rgba(255, 255, 255, 0.3);
         margin: 15px 0;
+      }
+
+      .divider-top {
+        height: 1px;
+        background: #000000;
+        margin: 20px 0;
       }
 
       .footer {
@@ -96,22 +104,57 @@
       .status.show {
         display: block;
       }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .gear-icon {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+      }
+
+      .gear-icon:hover {
+        opacity: 1;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        img {
+          width: 38px;
+          height: 38px;
+          margin: 0;
+          padding: 0;
+        }
+      }
     </style>
   </head>
   <body>
-    <h1>Browser Recorder</h1>
-    <p class="description">
-      Record your screen, windows, or tabs with ease. Open the recorder interface to get started.
-    </p>
+    <div class="header">
+      <div class="header-left">
+        <img src="./icons/logo.png" alt="Browser Recorder" />
+        <h1>Browser Recorder</h1>
+      </div>
+      <img src="./icons/gear.svg" alt="Settings" class="gear-icon" />
+    </div>
+    <p class="description">Record your screen, window, or tabs. Click the “Open Recorder” button to start recording.</p>
+
+    <div class="divider-top"></div>
 
     <div class="buttons">
-      <button id="openRecorderBtn">
-        <span class="icon">🎬</span>
+      <button class="button-primary" id="openRecorderBtn">
         <span>Open Recorder</span>
       </button>
 
       <button id="openPlayerBtn">
-        <span class="icon">▶️</span>
         <span>Open Player</span>
       </button>
     </div>
