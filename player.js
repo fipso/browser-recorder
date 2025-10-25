@@ -10,18 +10,24 @@ const downloadBtn = document.getElementById('downloadBtn');
 const deleteBtn = document.getElementById('deleteBtn');
 const volumeSlider = document.getElementById('volumeSlider');
 const speedSelect = document.getElementById('speedSelect');
-const progressBar = document.getElementById('progressBar');
-const progressFilled = document.getElementById('progressFilled');
 const currentTimeDisplay = document.getElementById('currentTime');
 const durationDisplay = document.getElementById('duration');
 const infoText = document.getElementById('infoText');
+const timelineTrack = document.getElementById('timelineTrack');
+const playhead = document.getElementById('playhead');
+const playheadHandle = document.getElementById('playheadHandle');
+const playheadTime = document.getElementById('playheadTime');
 
 let videoDataUrl = null;
 let isPlaying = false;
 let animationFrameId = null;
+let actualDuration = null; // Duration from recording timestamps
 
 // Format time helper
 function formatTime(seconds) {
+  if (!isFinite(seconds) || isNaN(seconds)) {
+    return '00:00';
+  }
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
@@ -38,8 +44,14 @@ function renderFrame() {
 
   // Update time display
   currentTimeDisplay.textContent = formatTime(hiddenVideo.currentTime);
-  const progress = (hiddenVideo.currentTime / hiddenVideo.duration) * 100;
-  progressFilled.style.width = `${progress}%`;
+  playheadTime.textContent = formatTime(hiddenVideo.currentTime);
+
+  // Update playhead position
+  const duration = actualDuration || hiddenVideo.duration;
+  if (isFinite(duration) && duration > 0) {
+    const progress = (hiddenVideo.currentTime / duration) * 100;
+    playhead.style.left = `${progress}%`;
+  }
 
   // Continue rendering
   animationFrameId = requestAnimationFrame(renderFrame);
@@ -47,22 +59,36 @@ function renderFrame() {
 
 // Load video from storage
 function loadVideo() {
-  chrome.storage.local.get(['recordedVideo', 'timestamp'], result => {
-    if (result.recordedVideo) {
-      videoDataUrl = result.recordedVideo;
-      hiddenVideo.src = videoDataUrl;
+  chrome.storage.local.get(
+    ['recordedVideo', 'timestamp', 'recordingDuration'],
+    result => {
+      if (result.recordedVideo) {
+        videoDataUrl = result.recordedVideo;
+        hiddenVideo.src = videoDataUrl;
 
-      // Enable controls
-      playPauseBtn.disabled = false;
-      downloadBtn.disabled = false;
-      deleteBtn.disabled = false;
+        // Get the actual duration from recording timestamps
+        if (result.recordingDuration) {
+          actualDuration = result.recordingDuration;
+          durationDisplay.textContent = formatTime(actualDuration);
+          console.log(
+            'Loaded duration from recording:',
+            actualDuration,
+            'seconds'
+          );
+        }
 
-      const date = new Date(result.timestamp);
-      infoText.textContent = `Recording from ${date.toLocaleString()}`;
-    } else {
-      infoText.textContent = 'No recording available. Record a video first.';
+        // Enable controls
+        playPauseBtn.disabled = false;
+        downloadBtn.disabled = false;
+        deleteBtn.disabled = false;
+
+        const date = new Date(result.timestamp);
+        infoText.textContent = `Recording from ${date.toLocaleString()}`;
+      } else {
+        infoText.textContent = 'No recording available. Record a video first.';
+      }
     }
-  });
+  );
 }
 
 // Setup canvas when video metadata loads
@@ -77,9 +103,6 @@ hiddenVideo.addEventListener('loadedmetadata', () => {
 
   // Draw first frame
   ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
-
-  // Set duration display
-  durationDisplay.textContent = formatTime(hiddenVideo.duration);
 });
 
 // Play/Pause button
@@ -123,21 +146,59 @@ hiddenVideo.addEventListener('ended', () => {
   ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
 });
 
-// Progress bar click
-progressBar.addEventListener('click', e => {
-  if (hiddenVideo.src) {
-    const rect = progressBar.getBoundingClientRect();
-    const pos = (e.clientX - rect.left) / rect.width;
-    hiddenVideo.currentTime = pos * hiddenVideo.duration;
+// Playhead dragging
+let isDraggingPlayhead = false;
+
+function updatePlayheadPosition(e) {
+  const duration = actualDuration || hiddenVideo.duration;
+  if (hiddenVideo.src && isFinite(duration) && duration > 0) {
+    const rect = timelineTrack.getBoundingClientRect();
+    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const newTime = pos * duration;
+
+    hiddenVideo.currentTime = newTime;
+
+    // Update display immediately
+    currentTimeDisplay.textContent = formatTime(newTime);
+    playheadTime.textContent = formatTime(newTime);
+    playhead.style.left = `${pos * 100}%`;
 
     // Draw frame at new position
     if (!isPlaying) {
       // Wait a bit for seek to complete
       setTimeout(() => {
         ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
-      }, 100);
+      }, 50);
     }
   }
+}
+
+// Playhead handle drag
+playheadHandle.addEventListener('mousedown', e => {
+  e.stopPropagation();
+  isDraggingPlayhead = true;
+  updatePlayheadPosition(e);
+});
+
+// Timeline track click
+timelineTrack.addEventListener('mousedown', e => {
+  if (
+    e.target === timelineTrack ||
+    e.target.closest('.timeline-ruler, .timeline-placeholder')
+  ) {
+    isDraggingPlayhead = true;
+    updatePlayheadPosition(e);
+  }
+});
+
+document.addEventListener('mousemove', e => {
+  if (isDraggingPlayhead) {
+    updatePlayheadPosition(e);
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  isDraggingPlayhead = false;
 });
 
 // Volume control
@@ -200,14 +261,17 @@ document.addEventListener('keydown', e => {
         break;
       case 'ArrowRight':
         e.preventDefault();
-        hiddenVideo.currentTime = Math.min(
-          hiddenVideo.duration,
-          hiddenVideo.currentTime + 5
-        );
-        if (!isPlaying) {
-          setTimeout(() => {
-            ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
-          }, 100);
+        const duration = actualDuration || hiddenVideo.duration;
+        if (isFinite(duration)) {
+          hiddenVideo.currentTime = Math.min(
+            duration,
+            hiddenVideo.currentTime + 5
+          );
+          if (!isPlaying) {
+            setTimeout(() => {
+              ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
+            }, 100);
+          }
         }
         break;
       case 'ArrowUp':
