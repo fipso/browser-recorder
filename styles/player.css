@@ -130,6 +130,15 @@ button:active {
   color: grey;
 }
 
+.export-btn {
+  background: #10b981;
+  color: white;
+}
+
+.export-btn:hover {
+  background: #059669;
+}
+
 .download-btn {
   background: #3b82f6;
   color: white;
@@ -384,11 +393,12 @@ select {
 
 .info-text {
   padding: 10px;
-  background: #0f172a;
+  background: #aeaeae;
   border-radius: 4px;
   font-size: 12px;
-  color: #94a3b8;
+  color: #000000;
   text-align: center;
+  margin-left: auto;
 }
 
 .timeline-editor {
@@ -407,18 +417,282 @@ select {
   cursor: pointer;
 }
 
-.timeline-ruler {
-  height: 30px;
-  background: #334155;
-  border-radius: 4px;
-  margin-bottom: 10px;
+.timeline-scale {
+  height: 25px;
   position: relative;
+  border-bottom: 2px solid #334155;
+  margin-bottom: 5px;
+}
+
+.timeline-tick {
+  position: absolute;
+  bottom: 0;
+  height: 8px;
+  width: 1px;
+  background: #475569;
+}
+
+.timeline-tick.major {
+  height: 12px;
+  width: 2px;
+  background: #64748b;
+}
+
+.timeline-tick-label {
+  position: absolute;
+  bottom: 14px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #94a3b8;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.timeline-content {
+  position: relative;
+  flex: 1;
+  min-height: 60px;
+}
+
+/* Export Settings Inline */
+.export-settings-inline {
   display: flex;
   align-items: center;
-  padding: 0 10px;
+  gap: 10px;
+}
+
+.export-settings-inline label {
+  font-size: 12px;
+  color: #000000;
+  font-weight: 600;
+}
+
+.export-settings-inline select {
+  padding: 6px 12px;
+  background: #aeaeae;
+  color: #000000;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Effect Properties Panel */
+.effect-properties {
+  margin-top: 15px;
+  padding: 15px;
+  background: #dddddd;
+  border-radius: 6px;
+  border: 1px solid #aeaeae;
+}
+
+.effect-properties h4 {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  color: #000000;
+  font-weight: 600;
+}
+
+.property-group {
+  margin-bottom: 12px;
+}
+
+.property-group label {
+  display: block;
+  font-size: 12px;
+  color: #000000;
+  margin-bottom: 6px;
+}
+
+.property-group select {
+  width: 100%;
+  padding: 6px 12px;
+  background: #aeaeae;
+  color: #000000;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.property-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.property-control input[type='range'] {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #aeaeae;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.property-control input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e21e80;
+  cursor: pointer;
+}
+
+.property-control input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e21e80;
+  cursor: pointer;
+  border: none;
+}
+
+.property-control span {
+  font-size: 12px;
+  color: #000000;
+  font-family: 'Courier New', monospace;
+  min-width: 40px;
+  text-align: right;
+}
+
+.property-control-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.property-control-grid > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.property-control-grid label {
+  margin: 0;
   font-size: 11px;
-  color: #94a3b8;
-  font-family: monospace;
+  min-width: 15px;
+}
+
+.property-control-grid input[type='number'] {
+  flex: 1;
+  padding: 6px 8px;
+  background: #aeaeae;
+  color: #000000;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  width: 100%;
+}
+
+.property-control-grid input[type='number']:read-only {
+  background: #dddddd;
+  color: #000000;
+  cursor: default;
+}
+
+.manual-position-hint {
+  font-size: 11px;
+  color: #e21e80;
+  background: rgba(226, 30, 128, 0.1);
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  text-align: center;
+  border: 1px solid rgba(226, 30, 128, 0.2);
+}
+
+.delete-effect-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+}
+
+.delete-effect-btn:hover {
+  background: #dc2626;
+}
+
+/* Video canvas clickable indicator */
+.video-container.manual-mode-active {
+  cursor: crosshair;
+}
+
+.video-container.manual-mode-active::after {
+  content: '📍 Click to set zoom position';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(226, 30, 128, 0.9);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Manual position pin marker */
+.manual-position-pin {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 99;
+  background: #ef4444;
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.5);
+  animation: pinDrop 0.3s ease-out;
+}
+
+.manual-position-pin::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(239, 68, 68, 0.4);
+  border-radius: 50%;
+  animation: pinPulse 2s ease-out infinite;
+}
+
+@keyframes pinDrop {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pinPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
 }
 
 .timeline-placeholder {

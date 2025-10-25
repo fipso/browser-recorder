@@ -7,6 +7,7 @@ const videoContainer = document.getElementById('videoContainer');
 const playPauseBtn = document.getElementById('playPauseBtn');
 const playPauseIcon = document.getElementById('playPauseIcon');
 const playPauseText = document.getElementById('playPauseText');
+const exportBtn = document.getElementById('exportBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 const deleteBtn = document.getElementById('deleteBtn');
 const currentTimeDisplay = document.getElementById('currentTime');
@@ -24,6 +25,8 @@ const debugModeToggle = document.getElementById('debugModeToggle');
 const cursorOffsetPanel = document.getElementById('cursorOffsetPanel');
 const cursorOffsetSlider = document.getElementById('cursorOffset');
 const cursorOffsetValue = document.getElementById('cursorOffsetValue');
+const exportFpsSelect = document.getElementById('exportFps');
+const exportBitrateSelect = document.getElementById('exportBitrate');
 const effectPropertiesPanel = document.getElementById('effectProperties');
 const zoomStrengthSlider = document.getElementById('zoomStrength');
 const zoomStrengthValue = document.getElementById('zoomStrengthValue');
@@ -117,6 +120,108 @@ function getActiveZoomSegment(time) {
   return zoomSegments.find(seg => time >= seg.start && time <= seg.end);
 }
 
+// Update zoom state based on active zoom segment
+function updateZoomState(zoomState, currentTime, skipIfEditing = false) {
+  const activeZoom = getActiveZoomSegment(currentTime);
+  const isEditingZoom =
+    skipIfEditing && activeZoom && activeZoom.id === selectedSegmentId;
+
+  if (activeZoom && !isEditingZoom) {
+    // Smoothly transition to target zoom level
+    const targetScale = activeZoom.zoomLevel || 2;
+    const zoomSpeed = 0.15;
+    zoomState.scale += (targetScale - zoomState.scale) * zoomSpeed;
+
+    let targetX, targetY;
+
+    if (activeZoom.mode === 'manual') {
+      // Manual mode: use specified position (percentage of video)
+      const manualX = (activeZoom.manualX || 50) / 100;
+      const manualY = (activeZoom.manualY || 50) / 100;
+
+      targetX = manualX * hiddenVideo.videoWidth;
+      targetY = manualY * hiddenVideo.videoHeight;
+
+      // Smooth transition to manual position
+      const smoothFactor = 0.15;
+      zoomState.x += (targetX - zoomState.x) * smoothFactor;
+      zoomState.y += (targetY - zoomState.y) * smoothFactor;
+    } else {
+      // Follow cursor mode
+      const cursor = getCursorAtTime(currentTime);
+
+      if (cursor) {
+        targetX = cursor.x;
+        targetY = cursor.y;
+
+        // Smooth camera movement - only move if cursor moved significantly
+        const distanceX = Math.abs(targetX - zoomState.x);
+        const distanceY = Math.abs(targetY - zoomState.y);
+        const threshold = 50;
+
+        if (distanceX > threshold || distanceY > threshold) {
+          const smoothFactor = 0.1;
+          zoomState.x += (targetX - zoomState.x) * smoothFactor;
+          zoomState.y += (targetY - zoomState.y) * smoothFactor;
+        }
+      }
+    }
+  } else {
+    // Reset zoom smoothly (zoom out)
+    const zoomSpeed = 0.15;
+    zoomState.scale += (1 - zoomState.scale) * zoomSpeed;
+
+    if (Math.abs(zoomState.scale - 1) < 0.01) {
+      zoomState.scale = 1;
+    }
+  }
+}
+
+// Draw video with zoom to canvas
+function drawVideoWithZoom(targetCtx, targetCanvas, videoElement, zoomState) {
+  if (Math.abs(zoomState.scale - 1) < 0.01) {
+    // No zoom, draw normal
+    targetCtx.drawImage(
+      videoElement,
+      0,
+      0,
+      targetCanvas.width,
+      targetCanvas.height
+    );
+  } else {
+    // Draw zoomed
+    targetCtx.fillStyle = '#000';
+    targetCtx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+
+    const zoomedWidth = targetCanvas.width / zoomState.scale;
+    const zoomedHeight = targetCanvas.height / zoomState.scale;
+
+    let sourceX = zoomState.x - zoomedWidth / 2;
+    let sourceY = zoomState.y - zoomedHeight / 2;
+
+    sourceX = Math.max(
+      0,
+      Math.min(videoElement.videoWidth - zoomedWidth, sourceX)
+    );
+    sourceY = Math.max(
+      0,
+      Math.min(videoElement.videoHeight - zoomedHeight, sourceY)
+    );
+
+    targetCtx.drawImage(
+      videoElement,
+      sourceX,
+      sourceY,
+      zoomedWidth,
+      zoomedHeight,
+      0,
+      0,
+      targetCanvas.width,
+      targetCanvas.height
+    );
+  }
+}
+
 // Render video frame to canvas
 function renderFrame() {
   if (!isPlaying || hiddenVideo.paused || hiddenVideo.ended) {
@@ -125,132 +230,11 @@ function renderFrame() {
 
   const currentTime = hiddenVideo.currentTime;
 
-  // Check if we should apply zoom (but not if currently editing)
-  const activeZoom = getActiveZoomSegment(currentTime);
-  const isEditingZoom = activeZoom && activeZoom.id === selectedSegmentId;
+  // Update zoom state (skip if currently editing)
+  updateZoomState(currentZoom, currentTime, true);
 
-  if (activeZoom && !isEditingZoom) {
-    // Smoothly transition to target zoom level
-    const targetScale = activeZoom.zoomLevel || 2;
-    const zoomSpeed = 0.15; // Higher = faster zoom in/out
-    currentZoom.scale += (targetScale - currentZoom.scale) * zoomSpeed;
-
-    if (activeZoom.mode === 'manual') {
-      // Manual mode: use specified position (percentage of video)
-      const manualX = (activeZoom.manualX || 50) / 100;
-      const manualY = (activeZoom.manualY || 50) / 100;
-
-      currentZoom.targetX = manualX * hiddenVideo.videoWidth;
-      currentZoom.targetY = manualY * hiddenVideo.videoHeight;
-
-      // Smooth transition to manual position
-      const smoothFactor = 0.15;
-      currentZoom.x += (currentZoom.targetX - currentZoom.x) * smoothFactor;
-      currentZoom.y += (currentZoom.targetY - currentZoom.y) * smoothFactor;
-    } else {
-      // Follow cursor mode
-      const cursor = getCursorAtTime(currentTime);
-
-      if (!cursor) {
-        console.warn('Active zoom but no cursor data at', currentTime);
-      }
-
-      if (cursor) {
-        // Update target position based on cursor
-        currentZoom.targetX = cursor.x;
-        currentZoom.targetY = cursor.y;
-
-        // Smooth camera movement - only move if cursor moved significantly
-        const distanceX = Math.abs(currentZoom.targetX - currentZoom.x);
-        const distanceY = Math.abs(currentZoom.targetY - currentZoom.y);
-        const threshold = 50; // Minimum movement before camera follows
-
-        if (distanceX > threshold || distanceY > threshold) {
-          // Lerp towards target with smoothing factor
-          const smoothFactor = 0.1;
-          currentZoom.x += (currentZoom.targetX - currentZoom.x) * smoothFactor;
-          currentZoom.y += (currentZoom.targetY - currentZoom.y) * smoothFactor;
-        }
-      }
-    }
-
-    // Draw zoomed frame
-    ctx.save();
-
-    // Clear canvas
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Calculate zoom viewport
-    const zoomedWidth = canvas.width / currentZoom.scale;
-    const zoomedHeight = canvas.height / currentZoom.scale;
-
-    // Center on cursor position, but clamp to video bounds
-    let sourceX = currentZoom.x - zoomedWidth / 2;
-    let sourceY = currentZoom.y - zoomedHeight / 2;
-
-    sourceX = Math.max(
-      0,
-      Math.min(hiddenVideo.videoWidth - zoomedWidth, sourceX)
-    );
-    sourceY = Math.max(
-      0,
-      Math.min(hiddenVideo.videoHeight - zoomedHeight, sourceY)
-    );
-
-    // Draw the zoomed portion
-    ctx.drawImage(
-      hiddenVideo,
-      sourceX,
-      sourceY,
-      zoomedWidth,
-      zoomedHeight,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
-    ctx.restore();
-  } else {
-    // Reset zoom smoothly (zoom out)
-    const zoomSpeed = 0.15; // Same speed as zoom in
-    currentZoom.scale += (1 - currentZoom.scale) * zoomSpeed;
-
-    if (Math.abs(currentZoom.scale - 1) < 0.01) {
-      currentZoom.scale = 1;
-      // Draw normal frame
-      ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
-    } else {
-      // Still transitioning out of zoom
-      const zoomedWidth = canvas.width / currentZoom.scale;
-      const zoomedHeight = canvas.height / currentZoom.scale;
-
-      let sourceX = currentZoom.x - zoomedWidth / 2;
-      let sourceY = currentZoom.y - zoomedHeight / 2;
-
-      sourceX = Math.max(
-        0,
-        Math.min(hiddenVideo.videoWidth - zoomedWidth, sourceX)
-      );
-      sourceY = Math.max(
-        0,
-        Math.min(hiddenVideo.videoHeight - zoomedHeight, sourceY)
-      );
-
-      ctx.drawImage(
-        hiddenVideo,
-        sourceX,
-        sourceY,
-        zoomedWidth,
-        zoomedHeight,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-    }
-  }
+  // Draw video with zoom
+  drawVideoWithZoom(ctx, canvas, hiddenVideo, currentZoom);
 
   // Draw cursor positions in debug mode
   if (debugMode && cursorData.length > 0) {
@@ -563,6 +547,7 @@ function loadVideo() {
 
         // Enable controls
         playPauseBtn.disabled = false;
+        exportBtn.disabled = false;
         downloadBtn.disabled = false;
         deleteBtn.disabled = false;
         addZoomBtn.disabled = false;
@@ -693,12 +678,194 @@ document.addEventListener('mouseup', () => {
   isDraggingPlayhead = false;
 });
 
-// Download button
+// Export with effects button
+exportBtn.addEventListener('click', async () => {
+  if (!videoDataUrl) return;
+
+  // Disable controls during export
+  exportBtn.disabled = true;
+  const originalText = exportBtn.textContent;
+  exportBtn.innerHTML = '<span>⏳</span> Exporting...';
+
+  try {
+    await exportVideoWithEffects();
+  } catch (error) {
+    console.error('Export failed:', error);
+    alert('Export failed: ' + error.message);
+  } finally {
+    exportBtn.disabled = false;
+    exportBtn.innerHTML = '<span>🎬</span> Export with Effects';
+  }
+});
+
+// Export video with effects applied
+async function exportVideoWithEffects() {
+  const duration = actualDuration || hiddenVideo.duration;
+  if (!isFinite(duration) || duration <= 0) {
+    throw new Error('Invalid video duration');
+  }
+
+  // Get export settings from UI
+  const fps = parseInt(exportFpsSelect.value);
+  const bitrate = parseInt(exportBitrateSelect.value);
+  const frameTime = 1 / fps;
+  const totalFrames = Math.ceil(duration * fps);
+
+  console.log(`Starting export: ${totalFrames} frames at ${fps} fps`);
+  infoText.textContent = `Exporting frame 0 / ${totalFrames}...`;
+
+  // Calculate export resolution (max 1920x1080, maintain aspect ratio)
+  const maxWidth = 1920;
+  const maxHeight = 1080;
+  const videoAspect = hiddenVideo.videoWidth / hiddenVideo.videoHeight;
+
+  let exportWidth, exportHeight;
+
+  if (
+    hiddenVideo.videoWidth <= maxWidth &&
+    hiddenVideo.videoHeight <= maxHeight
+  ) {
+    // Already within limits, use original size
+    exportWidth = hiddenVideo.videoWidth;
+    exportHeight = hiddenVideo.videoHeight;
+  } else {
+    // Need to scale down
+    if (videoAspect > maxWidth / maxHeight) {
+      // Width is the limiting factor
+      exportWidth = maxWidth;
+      exportHeight = Math.round(maxWidth / videoAspect);
+    } else {
+      // Height is the limiting factor
+      exportHeight = maxHeight;
+      exportWidth = Math.round(maxHeight * videoAspect);
+    }
+  }
+
+  console.log(
+    `Export resolution: ${exportWidth}x${exportHeight} (original: ${hiddenVideo.videoWidth}x${hiddenVideo.videoHeight})`
+  );
+
+  // Create offscreen canvas for rendering
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = exportWidth;
+  exportCanvas.height = exportHeight;
+  const exportCtx = exportCanvas.getContext('2d');
+
+  // Create MediaRecorder to capture the canvas
+  const stream = exportCanvas.captureStream(fps);
+  const recorder = new MediaRecorder(stream, {
+    mimeType: 'video/webm;codecs=vp9',
+    videoBitsPerSecond: bitrate,
+  });
+
+  const chunks = [];
+  recorder.ondataavailable = e => {
+    if (e.data.size > 0) {
+      chunks.push(e.data);
+    }
+  };
+
+  // Start recording
+  recorder.start(100); // Request data every 100ms
+
+  // Store original state
+  const wasPlaying = isPlaying;
+  const originalTime = hiddenVideo.currentTime;
+  if (wasPlaying) {
+    pauseVideo();
+  }
+
+  // Initialize smooth zoom state for export
+  let exportZoomState = {
+    scale: 1,
+    x: hiddenVideo.videoWidth / 2,
+    y: hiddenVideo.videoHeight / 2,
+  };
+
+  // Play video and capture frames in real-time
+  hiddenVideo.currentTime = 0;
+  await new Promise(resolve => (hiddenVideo.onseeked = resolve));
+
+  // Set playback rate to 1x for smooth capture
+  hiddenVideo.playbackRate = 1.0;
+
+  let frameCount = 0;
+  let isExporting = true; // Flag to control the render loop
+
+  // Render loop - captures frames as video plays
+  const renderLoop = () => {
+    if (!isExporting) return; // Stop if export was cancelled
+
+    const currentTime = hiddenVideo.currentTime;
+
+    // Update zoom state using shared function
+    updateZoomState(exportZoomState, currentTime, false);
+
+    // Draw frame using shared function
+    drawVideoWithZoom(exportCtx, exportCanvas, hiddenVideo, exportZoomState);
+
+    frameCount++;
+
+    // Update progress every 30 frames
+    if (frameCount % 30 === 0) {
+      const progress = Math.min(100, (currentTime / duration) * 100);
+      infoText.textContent = `Exporting: ${progress.toFixed(0)}% (${frameCount} frames)`;
+    }
+
+    // Continue if video hasn't ended
+    if (currentTime < duration && !hiddenVideo.ended && isExporting) {
+      requestAnimationFrame(renderLoop);
+    }
+  };
+
+  // Start playback and rendering
+  hiddenVideo.play();
+  renderLoop();
+
+  // Wait for video to finish
+  await new Promise(resolve => {
+    hiddenVideo.onended = () => {
+      isExporting = false; // Stop the render loop
+      resolve();
+    };
+  });
+
+  // Give a small delay to ensure all frames are captured
+  await new Promise(resolve => setTimeout(resolve, 100));
+
+  // Stop recording
+  recorder.stop();
+
+  // Wait for final data
+  await new Promise(resolve => {
+    recorder.onstop = resolve;
+  });
+
+  // Create blob and download
+  const blob = new Blob(chunks, { type: 'video/webm' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `screen-recording-exported-${Date.now()}.webm`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // Restore original state
+  hiddenVideo.currentTime = originalTime;
+  if (wasPlaying) {
+    playVideo();
+  }
+
+  infoText.textContent = `Export complete! ${frameCount} frames rendered.`;
+  console.log(`Export complete! ${frameCount} frames rendered`);
+}
+
+// Download original button
 downloadBtn.addEventListener('click', () => {
   if (videoDataUrl) {
     const a = document.createElement('a');
     a.href = videoDataUrl;
-    a.download = `screen-recording-${Date.now()}.webm`;
+    a.download = `screen-recording-original-${Date.now()}.webm`;
     a.click();
   }
 });
@@ -723,6 +890,7 @@ deleteBtn.addEventListener('click', () => {
         canvas.style.display = 'none';
         noVideo.style.display = 'block';
         playPauseBtn.disabled = true;
+        exportBtn.disabled = true;
         downloadBtn.disabled = true;
         deleteBtn.disabled = true;
         addZoomBtn.disabled = true;

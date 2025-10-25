@@ -105,7 +105,35 @@
             </div>
           </div>
 
+          <div class="timeline-control">
+            <!-- Export Settings -->
+            <div class="export-settings-inline">
+              <label for="exportFps">FPS:</label>
+              <select id="exportFps">
+                <option value="24">24</option>
+                <option value="30" selected>30</option>
+                <option value="60">60</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="timeline-control">
+            <div class="export-settings-inline">
+              <label for="exportBitrate">Quality:</label>
+              <select id="exportBitrate">
+                <option value="2500000">2.5</option>
+                <option value="5000000" selected>5</option>
+                <option value="8000000">8</option>
+                <option value="10000000">10</option>
+              </select>
+            </div>
+          </div>
+
           <div class="button-actions">
+            <button id="exportBtn" class="export-btn" disabled>
+              <h1 class="bi bi-film"></h1>
+            </button>
+
             <button id="deleteBtn" class="delete-btn" disabled>
               <h1 class="bi bi-trash3-fill"></h1>
             </button>
@@ -118,8 +146,44 @@
 
         <div class="timeline-controls">
           <button class="add-zoom-btn" id="addZoomBtn">+ Add Zoom Effect</button>
+          <div class="info-text" id="infoText">Load a recording to start playing.</div>
           <div class="debug-info" id="debugInfo"></div>
         </div>
+
+        <!-- Effect Properties Panel -->
+        <div class="effect-properties" id="effectProperties" style="display: none">
+          <h4>Effect Properties</h4>
+          <div class="property-group">
+            <label for="zoomStrength">Zoom Strength:</label>
+            <div class="property-control">
+              <input type="range" id="zoomStrength" min="1.5" max="4" step="0.1" value="2" />
+              <span id="zoomStrengthValue">2.0x</span>
+            </div>
+          </div>
+          <div class="property-group">
+            <label for="zoomMode">Zoom Mode:</label>
+            <select id="zoomMode">
+              <option value="follow">Follow Cursor</option>
+              <option value="manual">Manual Position</option>
+            </select>
+          </div>
+          <div class="property-group manual-mode-only" id="manualPositionGroup" style="display: none">
+            <label>Zoom Position:</label>
+            <div class="manual-position-hint">📍 Click on the video to set zoom position</div>
+            <div class="property-control-grid">
+              <div>
+                <label for="manualX">X:</label>
+                <input type="number" id="manualX" min="0" max="100" value="50" readonly />
+              </div>
+              <div>
+                <label for="manualY">Y:</label>
+                <input type="number" id="manualY" min="0" max="100" value="50" readonly />
+              </div>
+            </div>
+          </div>
+          <button id="deleteEffectBtn" class="delete-effect-btn">Delete Effect</button>
+        </div>
+
         <span id="debug-consoles" class="hidden">
           <div class="debug-panel" id="debugPanel"></div>
           <div class="debug-panel debug-hidden" id="cursorOffsetPanel">
