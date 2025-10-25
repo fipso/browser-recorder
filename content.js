@@ -69,7 +69,9 @@ function handleMouseMove(e) {
 
     // Log every 50 points
     if (cursorData.length % 50 === 0) {
-      console.log(`🎯 [Content Script] Collected ${cursorData.length} cursor points`);
+      console.log(
+        `🎯 [Content Script] Collected ${cursorData.length} cursor points`
+      );
     }
   }
 }
@@ -107,7 +109,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     showTrackingIndicator();
 
     console.log('🎯 [Content Script] ✅ Cursor tracking STARTED');
-    console.log('🎯 [Content Script] Move your mouse on THIS page to collect data');
+    console.log(
+      '🎯 [Content Script] Move your mouse on THIS page to collect data'
+    );
     sendResponse({ status: 'started' });
   } else if (message.action === 'stopCursorTracking') {
     console.log('🎯 [Content Script] Stopping cursor tracking...');
@@ -118,16 +122,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     hideTrackingIndicator();
 
-    console.log(`🎯 [Content Script] ✅ Cursor tracking STOPPED. Collected ${cursorData.length} points`);
+    console.log(
+      `🎯 [Content Script] ✅ Cursor tracking STOPPED. Collected ${cursorData.length} points`
+    );
     if (cursorData.length > 0) {
       console.log('🎯 [Content Script] First point:', cursorData[0]);
-      console.log('🎯 [Content Script] Last point:', cursorData[cursorData.length - 1]);
+      console.log(
+        '🎯 [Content Script] Last point:',
+        cursorData[cursorData.length - 1]
+      );
     } else {
-      console.warn('🎯 [Content Script] ⚠️ NO CURSOR DATA COLLECTED! Did you move the mouse on this page?');
+      console.warn(
+        '🎯 [Content Script] ⚠️ NO CURSOR DATA COLLECTED! Did you move the mouse on this page?'
+      );
     }
     sendResponse({ status: 'stopped', cursorData: cursorData });
   } else if (message.action === 'getCursorData') {
-    console.log('🎯 [Content Script] Sending cursor data:', cursorData.length, 'points');
+    console.log(
+      '🎯 [Content Script] Sending cursor data:',
+      cursorData.length,
+      'points'
+    );
     sendResponse({ cursorData: cursorData });
   }
 

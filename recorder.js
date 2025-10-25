@@ -30,7 +30,15 @@ startBtn.addEventListener('click', async () => {
   try {
     // Clear old recording data including zoom segments
     chrome.storage.local.remove(
-      ['recordedVideo', 'timestamp', 'recordingDuration', 'recordingStartTime', 'recordingEndTime', 'cursorData', 'zoomSegments'],
+      [
+        'recordedVideo',
+        'timestamp',
+        'recordingDuration',
+        'recordingStartTime',
+        'recordingEndTime',
+        'cursorData',
+        'zoomSegments',
+      ],
       () => {
         console.log('Cleared old recording data');
       }
@@ -125,14 +133,20 @@ startBtn.addEventListener('click', async () => {
               });
               if (response && response.cursorData) {
                 cursorTrackingData = response.cursorData;
-                console.log('Collected cursor data:', cursorTrackingData.length, 'points');
+                console.log(
+                  'Collected cursor data:',
+                  cursorTrackingData.length,
+                  'points'
+                );
 
                 // Update storage with cursor data
-                chrome.storage.local.set({ cursorData: cursorTrackingData }, () => {
-                  console.log('Cursor data saved to storage');
-                  infoElement.textContent =
-                    `Recording saved with ${cursorTrackingData.length} cursor points! You can download it or open it in the player.`;
-                });
+                chrome.storage.local.set(
+                  { cursorData: cursorTrackingData },
+                  () => {
+                    console.log('Cursor data saved to storage');
+                    infoElement.textContent = `Recording saved with ${cursorTrackingData.length} cursor points! You can download it or open it in the player.`;
+                  }
+                );
               }
             } catch (error) {
               console.warn('Could not get cursor tracking data:', error);
@@ -185,16 +199,24 @@ startBtn.addEventListener('click', async () => {
           console.log('Sharing a browser tab');
 
           // Get the active tab as best guess
-          const activeTabs = await chrome.tabs.query({ active: true, currentWindow: true });
+          const activeTabs = await chrome.tabs.query({
+            active: true,
+            currentWindow: true,
+          });
           if (activeTabs.length > 0) {
             targetTab = activeTabs[0];
             console.log('Using active tab:', targetTab.title);
           }
         } else {
-          console.log('Sharing window/monitor - will use active tab as fallback');
+          console.log(
+            'Sharing window/monitor - will use active tab as fallback'
+          );
           // For window/monitor sharing, we can't detect automatically
           // Use the currently active tab as best guess
-          const activeTabs = await chrome.tabs.query({ active: true, currentWindow: true });
+          const activeTabs = await chrome.tabs.query({
+            active: true,
+            currentWindow: true,
+          });
           if (activeTabs.length > 0) {
             targetTab = activeTabs[0];
             console.log('Using active tab as fallback:', targetTab.title);
@@ -205,7 +227,9 @@ startBtn.addEventListener('click', async () => {
         if (!targetTab) {
           const allTabs = await chrome.tabs.query({});
           const webTabs = allTabs.filter(
-            tab => tab.url && (tab.url.startsWith('http://') || tab.url.startsWith('https://'))
+            tab =>
+              tab.url &&
+              (tab.url.startsWith('http://') || tab.url.startsWith('https://'))
           );
           if (webTabs.length > 0) {
             targetTab = webTabs[0];
@@ -222,12 +246,15 @@ startBtn.addEventListener('click', async () => {
             try {
               await chrome.scripting.executeScript({
                 target: { tabId: recordedTabId },
-                files: ['content.js']
+                files: ['content.js'],
               });
               console.log('Content script injected');
             } catch (injectError) {
               // Script might already be injected, that's ok
-              console.log('Content script already loaded or inject failed:', injectError.message);
+              console.log(
+                'Content script already loaded or inject failed:',
+                injectError.message
+              );
             }
 
             // Wait for content script to fully initialize
@@ -239,9 +266,12 @@ startBtn.addEventListener('click', async () => {
 
             while (retries > 0 && !scriptReady) {
               try {
-                const pingResponse = await chrome.tabs.sendMessage(recordedTabId, {
-                  action: 'ping'
-                });
+                const pingResponse = await chrome.tabs.sendMessage(
+                  recordedTabId,
+                  {
+                    action: 'ping',
+                  }
+                );
                 if (pingResponse && pingResponse.status === 'ready') {
                   scriptReady = true;
                   break;
@@ -255,11 +285,18 @@ startBtn.addEventListener('click', async () => {
 
             if (scriptReady) {
               // Content script is ready, start tracking
-              const trackingResponse = await chrome.tabs.sendMessage(recordedTabId, {
-                action: 'startCursorTracking'
-              });
+              const trackingResponse = await chrome.tabs.sendMessage(
+                recordedTabId,
+                {
+                  action: 'startCursorTracking',
+                }
+              );
 
-              console.log('Started cursor tracking in tab:', targetTab.title, trackingResponse);
+              console.log(
+                'Started cursor tracking in tab:',
+                targetTab.title,
+                trackingResponse
+              );
               infoElement.textContent = `Recording... (🔴 Tracking cursor in: ${targetTab.title || 'Untitled'})`;
             } else {
               throw new Error('Content script not responding after retries');
@@ -270,7 +307,8 @@ startBtn.addEventListener('click', async () => {
           }
         } else {
           console.warn('No web tabs found to track cursor');
-          infoElement.textContent = 'Recording... (No cursor tracking - no web tabs open)';
+          infoElement.textContent =
+            'Recording... (No cursor tracking - no web tabs open)';
         }
       } catch (error) {
         console.warn('Could not start cursor tracking:', error);

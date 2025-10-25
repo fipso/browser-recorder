@@ -127,8 +127,14 @@ function renderFrame() {
     let sourceX = currentZoom.x - zoomedWidth / 2;
     let sourceY = currentZoom.y - zoomedHeight / 2;
 
-    sourceX = Math.max(0, Math.min(hiddenVideo.videoWidth - zoomedWidth, sourceX));
-    sourceY = Math.max(0, Math.min(hiddenVideo.videoHeight - zoomedHeight, sourceY));
+    sourceX = Math.max(
+      0,
+      Math.min(hiddenVideo.videoWidth - zoomedWidth, sourceX)
+    );
+    sourceY = Math.max(
+      0,
+      Math.min(hiddenVideo.videoHeight - zoomedHeight, sourceY)
+    );
 
     // Draw the zoomed portion
     ctx.drawImage(
@@ -160,8 +166,14 @@ function renderFrame() {
       let sourceX = currentZoom.x - zoomedWidth / 2;
       let sourceY = currentZoom.y - zoomedHeight / 2;
 
-      sourceX = Math.max(0, Math.min(hiddenVideo.videoWidth - zoomedWidth, sourceX));
-      sourceY = Math.max(0, Math.min(hiddenVideo.videoHeight - zoomedHeight, sourceY));
+      sourceX = Math.max(
+        0,
+        Math.min(hiddenVideo.videoWidth - zoomedWidth, sourceX)
+      );
+      sourceY = Math.max(
+        0,
+        Math.min(hiddenVideo.videoHeight - zoomedHeight, sourceY)
+      );
 
       ctx.drawImage(
         hiddenVideo,
@@ -227,7 +239,13 @@ function updateDebugInfo() {
 // Load video from storage
 function loadVideo() {
   chrome.storage.local.get(
-    ['recordedVideo', 'timestamp', 'recordingDuration', 'cursorData', 'zoomSegments'],
+    [
+      'recordedVideo',
+      'timestamp',
+      'recordingDuration',
+      'cursorData',
+      'zoomSegments',
+    ],
     result => {
       if (result.recordedVideo) {
         videoDataUrl = result.recordedVideo;

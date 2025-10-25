@@ -1,0 +1,100 @@
+/* Recorder-specific styles */
+body {
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  min-height: 0;
+}
+
+.canvas-container {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  height: 60vh;
+  max-height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 20px;
+  /* margin-bottom: 20px; */
+}
+
+canvas {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+.controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Recorder-specific button overrides */
+button {
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 6px;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.recording-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.timer {
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.info {
+  margin-top: 10px;
+  padding: 12px 20px;
+  background: #374151;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  max-width: 600px;
+}
