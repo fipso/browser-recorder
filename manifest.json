@@ -3,7 +3,7 @@
   "name": "Browser Recorder",
   "version": "1.0.0",
   "description": "Record your screen with a simple fullscreen interface",
-  "permissions": ["activeTab", "tabs", "storage", "scripting"],
+  "permissions": ["activeTab", "tabs", "storage", "scripting", "webNavigation"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"

@@ -590,7 +590,9 @@ startBtn.addEventListener('click', async () => {
     };
 
     // Add both listeners
-    chrome.webNavigation.onBeforeNavigate.addListener(navigationListener);
+    if (chrome.webNavigation && chrome.webNavigation.onBeforeNavigate) {
+      chrome.webNavigation.onBeforeNavigate.addListener(navigationListener);
+    }
     chrome.tabs.onUpdated.addListener(tabUpdateListener);
 
     // Store the listener references so we can remove them later
@@ -629,7 +631,11 @@ function stopRecording() {
     stopTimer();
 
     // Remove navigation listener
-    if (window.navigationListener) {
+    if (
+      window.navigationListener &&
+      chrome.webNavigation &&
+      chrome.webNavigation.onBeforeNavigate
+    ) {
       chrome.webNavigation.onBeforeNavigate.removeListener(
         window.navigationListener
       );
