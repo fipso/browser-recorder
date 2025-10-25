@@ -1,4 +1,4 @@
-# Screen Recorder Chrome Extension
+# Browser Recorder Chrome Extension
 
 A simple and powerful Chrome extension for recording your screen, windows, or tabs with a fullscreen interface and video player.
 
@@ -20,12 +20,14 @@ A simple and powerful Chrome extension for recording your screen, windows, or ta
 ## Development Setup
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/fipso/browser-recorder.git
    cd browser-recorder
    ```
 
 2. Install development dependencies:
+
    ```bash
    npm install
    ```

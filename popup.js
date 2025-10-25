@@ -12,7 +12,7 @@ function showStatus(message, duration = 2000) {
 }
 
 openRecorderBtn.addEventListener('click', () => {
-  chrome.runtime.sendMessage({ action: 'openRecorder' }, (response) => {
+  chrome.runtime.sendMessage({ action: 'openRecorder' }, response => {
     if (response && response.tabId) {
       showStatus('Recorder opened!');
       window.close();
@@ -23,7 +23,7 @@ openRecorderBtn.addEventListener('click', () => {
 });
 
 openPlayerBtn.addEventListener('click', () => {
-  chrome.runtime.sendMessage({ action: 'openPlayer' }, (response) => {
+  chrome.runtime.sendMessage({ action: 'openPlayer' }, response => {
     if (response && response.tabId) {
       showStatus('Player opened!');
       window.close();

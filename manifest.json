@@ -1,17 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Screen Recorder",
+  "name": "Browser Recorder",
   "version": "1.0.0",
   "description": "Record your screen with a simple fullscreen interface",
-  "permissions": [
-    "activeTab",
-    "tabs",
-    "storage",
-    "scripting"
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
+  "permissions": ["activeTab", "tabs", "storage", "scripting"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },

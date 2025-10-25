@@ -47,7 +47,7 @@ function renderFrame() {
 
 // Load video from storage
 function loadVideo() {
-  chrome.storage.local.get(['recordedVideo', 'timestamp'], (result) => {
+  chrome.storage.local.get(['recordedVideo', 'timestamp'], result => {
     if (result.recordedVideo) {
       videoDataUrl = result.recordedVideo;
       hiddenVideo.src = videoDataUrl;
@@ -124,7 +124,7 @@ hiddenVideo.addEventListener('ended', () => {
 });
 
 // Progress bar click
-progressBar.addEventListener('click', (e) => {
+progressBar.addEventListener('click', e => {
   if (hiddenVideo.src) {
     const rect = progressBar.getBoundingClientRect();
     const pos = (e.clientX - rect.left) / rect.width;
@@ -141,12 +141,12 @@ progressBar.addEventListener('click', (e) => {
 });
 
 // Volume control
-volumeSlider.addEventListener('input', (e) => {
+volumeSlider.addEventListener('input', e => {
   hiddenVideo.volume = e.target.value / 100;
 });
 
 // Speed control
-speedSelect.addEventListener('change', (e) => {
+speedSelect.addEventListener('change', e => {
   hiddenVideo.playbackRate = parseFloat(e.target.value);
 });
 
@@ -182,9 +182,9 @@ deleteBtn.addEventListener('click', () => {
 });
 
 // Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
+document.addEventListener('keydown', e => {
   if (hiddenVideo.src) {
-    switch(e.key) {
+    switch (e.key) {
       case ' ':
         e.preventDefault();
         playPauseBtn.click();
@@ -200,7 +200,10 @@ document.addEventListener('keydown', (e) => {
         break;
       case 'ArrowRight':
         e.preventDefault();
-        hiddenVideo.currentTime = Math.min(hiddenVideo.duration, hiddenVideo.currentTime + 5);
+        hiddenVideo.currentTime = Math.min(
+          hiddenVideo.duration,
+          hiddenVideo.currentTime + 5
+        );
         if (!isPlaying) {
           setTimeout(() => {
             ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);

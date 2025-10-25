@@ -31,13 +31,13 @@ startBtn.addEventListener('click', async () => {
       video: {
         mediaSource: 'screen',
         width: { ideal: 1920 },
-        height: { ideal: 1080 }
+        height: { ideal: 1080 },
       },
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
-        sampleRate: 44100
-      }
+        sampleRate: 44100,
+      },
     });
 
     // Draw stream to canvas
@@ -62,7 +62,7 @@ startBtn.addEventListener('click', async () => {
     // Setup MediaRecorder
     const options = {
       mimeType: 'video/webm;codecs=vp9',
-      videoBitsPerSecond: 2500000
+      videoBitsPerSecond: 2500000,
     };
 
     // Fallback to vp8 if vp9 is not supported
@@ -73,7 +73,7 @@ startBtn.addEventListener('click', async () => {
     mediaRecorder = new MediaRecorder(stream, options);
     recordedChunks = [];
 
-    mediaRecorder.ondataavailable = (event) => {
+    mediaRecorder.ondataavailable = event => {
       if (event.data.size > 0) {
         recordedChunks.push(event.data);
       }
@@ -86,15 +86,19 @@ startBtn.addEventListener('click', async () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64data = reader.result;
-        chrome.storage.local.set({
-          recordedVideo: base64data,
-          timestamp: Date.now()
-        }, () => {
-          console.log('Video saved to storage');
-          downloadBtn.disabled = false;
-          playBtn.disabled = false;
-          infoElement.textContent = 'Recording saved! You can download it or open it in the player.';
-        });
+        chrome.storage.local.set(
+          {
+            recordedVideo: base64data,
+            timestamp: Date.now(),
+          },
+          () => {
+            console.log('Video saved to storage');
+            downloadBtn.disabled = false;
+            playBtn.disabled = false;
+            infoElement.textContent =
+              'Recording saved! You can download it or open it in the player.';
+          }
+        );
       };
       reader.readAsDataURL(blob);
 
@@ -122,7 +126,8 @@ startBtn.addEventListener('click', async () => {
     statusText.textContent = 'Recording';
     recordingIndicator.style.display = 'block';
     timerElement.style.display = 'block';
-    infoElement.textContent = 'Recording in progress... Click "Stop Recording" when done.';
+    infoElement.textContent =
+      'Recording in progress... Click "Stop Recording" when done.';
 
     // Handle stream ending (user clicks "Stop sharing" in browser)
     stream.getVideoTracks()[0].onended = () => {
@@ -130,11 +135,11 @@ startBtn.addEventListener('click', async () => {
         stopRecording();
       }
     };
-
   } catch (error) {
     console.error('Error starting recording:', error);
     statusText.textContent = 'Error: ' + error.message;
-    infoElement.textContent = 'Failed to start recording. Please make sure you grant permission.';
+    infoElement.textContent =
+      'Failed to start recording. Please make sure you grant permission.';
   }
 });
 
@@ -143,7 +148,7 @@ stopBtn.addEventListener('click', () => {
 });
 
 downloadBtn.addEventListener('click', () => {
-  chrome.storage.local.get(['recordedVideo'], (result) => {
+  chrome.storage.local.get(['recordedVideo'], result => {
     if (result.recordedVideo) {
       const a = document.createElement('a');
       a.href = result.recordedVideo;
