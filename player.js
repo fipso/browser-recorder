@@ -3,13 +3,12 @@ const canvas = document.getElementById('videoCanvas');
 const ctx = canvas.getContext('2d');
 const hiddenVideo = document.getElementById('hiddenVideo');
 const noVideo = document.getElementById('noVideo');
+const videoContainer = document.getElementById('videoContainer');
 const playPauseBtn = document.getElementById('playPauseBtn');
 const playPauseIcon = document.getElementById('playPauseIcon');
 const playPauseText = document.getElementById('playPauseText');
 const downloadBtn = document.getElementById('downloadBtn');
 const deleteBtn = document.getElementById('deleteBtn');
-const volumeSlider = document.getElementById('volumeSlider');
-const speedSelect = document.getElementById('speedSelect');
 const currentTimeDisplay = document.getElementById('currentTime');
 const durationDisplay = document.getElementById('duration');
 const infoText = document.getElementById('infoText');
@@ -122,10 +121,11 @@ function renderFrame() {
 
   const currentTime = hiddenVideo.currentTime;
 
-  // Check if we should apply zoom
+  // Check if we should apply zoom (but not if currently editing)
   const activeZoom = getActiveZoomSegment(currentTime);
+  const isEditingZoom = activeZoom && activeZoom.id === selectedSegmentId;
 
-  if (activeZoom) {
+  if (activeZoom && !isEditingZoom) {
     // Smoothly transition to target zoom level
     const targetScale = activeZoom.zoomLevel || 2;
     const zoomSpeed = 0.15; // Higher = faster zoom in/out
@@ -262,6 +262,31 @@ function renderFrame() {
   if (isFinite(duration) && duration > 0) {
     const progress = (currentTime / duration) * 100;
     playhead.style.left = `${progress}%`;
+  }
+
+  // Update manual position pin only if effect is selected
+  if (selectedSegmentId) {
+    const segment = zoomSegments.find(s => s.id === selectedSegmentId);
+    if (
+      segment &&
+      segment.mode === 'manual' &&
+      videoContainer.classList.contains('manual-mode-active')
+    ) {
+      const existingPin = videoContainer.querySelector('.manual-position-pin');
+      if (existingPin) {
+        // Update pin position in case canvas size changed
+        const canvasRect = canvas.getBoundingClientRect();
+        const containerRect = videoContainer.getBoundingClientRect();
+        const x =
+          (segment.manualX / 100) * canvasRect.width +
+          (canvasRect.left - containerRect.left);
+        const y =
+          (segment.manualY / 100) * canvasRect.height +
+          (canvasRect.top - containerRect.top);
+        existingPin.style.left = `${x}px`;
+        existingPin.style.top = `${y}px`;
+      }
+    }
   }
 
   // Continue rendering
@@ -666,16 +691,6 @@ document.addEventListener('mouseup', () => {
   isDraggingPlayhead = false;
 });
 
-// Volume control
-volumeSlider.addEventListener('input', e => {
-  hiddenVideo.volume = e.target.value / 100;
-});
-
-// Speed control
-speedSelect.addEventListener('change', e => {
-  hiddenVideo.playbackRate = parseFloat(e.target.value);
-});
-
 // Download button
 downloadBtn.addEventListener('click', () => {
   if (videoDataUrl) {
@@ -758,16 +773,6 @@ document.addEventListener('keydown', e => {
             }, 100);
           }
         }
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        hiddenVideo.volume = Math.min(1, hiddenVideo.volume + 0.1);
-        volumeSlider.value = hiddenVideo.volume * 100;
-        break;
-      case 'ArrowDown':
-        e.preventDefault();
-        hiddenVideo.volume = Math.max(0, hiddenVideo.volume - 0.1);
-        volumeSlider.value = hiddenVideo.volume * 100;
         break;
       case 'f':
         e.preventDefault();
@@ -961,6 +966,7 @@ function deselectSegment() {
   selectedSegmentId = null;
   renderZoomSegments();
   effectPropertiesPanel.style.display = 'none';
+  updateManualModeUI(false); // Remove pin and manual mode UI
 }
 
 // Update properties panel with selected segment data
@@ -968,6 +974,7 @@ function updatePropertiesPanel() {
   const segment = zoomSegments.find(s => s.id === selectedSegmentId);
   if (!segment) {
     effectPropertiesPanel.style.display = 'none';
+    updateManualModeUI(false);
     return;
   }
 
@@ -981,15 +988,64 @@ function updatePropertiesPanel() {
   zoomModeSelect.value = segment.mode || 'follow';
 
   // Update manual position inputs
-  manualXInput.value = segment.manualX || 50;
-  manualYInput.value = segment.manualY || 50;
+  manualXInput.value = Math.round(segment.manualX || 50);
+  manualYInput.value = Math.round(segment.manualY || 50);
 
-  // Show/hide manual position controls
+  // Show/hide manual position controls and update UI
   if (segment.mode === 'manual') {
     manualPositionGroup.style.display = 'block';
+    updateManualModeUI(true);
+    renderManualPositionPin();
   } else {
     manualPositionGroup.style.display = 'none';
+    updateManualModeUI(false);
   }
+}
+
+// Update UI for manual mode (add/remove clickable state)
+function updateManualModeUI(isManualMode) {
+  if (isManualMode) {
+    videoContainer.classList.add('manual-mode-active');
+  } else {
+    videoContainer.classList.remove('manual-mode-active');
+    // Remove any existing pin
+    const existingPin = videoContainer.querySelector('.manual-position-pin');
+    if (existingPin) {
+      existingPin.remove();
+    }
+  }
+}
+
+// Render pin marker on video at manual position
+function renderManualPositionPin() {
+  const segment = zoomSegments.find(s => s.id === selectedSegmentId);
+  if (!segment || segment.mode !== 'manual') return;
+
+  // Remove existing pin
+  const existingPin = videoContainer.querySelector('.manual-position-pin');
+  if (existingPin) {
+    existingPin.remove();
+  }
+
+  // Create new pin (red circle)
+  const pin = document.createElement('div');
+  pin.className = 'manual-position-pin';
+
+  // Calculate position relative to canvas
+  const canvasRect = canvas.getBoundingClientRect();
+  const containerRect = videoContainer.getBoundingClientRect();
+
+  const x =
+    (segment.manualX / 100) * canvasRect.width +
+    (canvasRect.left - containerRect.left);
+  const y =
+    (segment.manualY / 100) * canvasRect.height +
+    (canvasRect.top - containerRect.top);
+
+  pin.style.left = `${x}px`;
+  pin.style.top = `${y}px`;
+
+  videoContainer.appendChild(pin);
 }
 
 // Handle mouse move for dragging and resizing
@@ -1069,30 +1125,46 @@ zoomModeSelect.addEventListener('change', () => {
 
   segment.mode = zoomModeSelect.value;
 
-  // Show/hide manual position controls
+  // Show/hide manual position controls and update UI
   if (segment.mode === 'manual') {
     manualPositionGroup.style.display = 'block';
+    updateManualModeUI(true);
+    renderManualPositionPin();
   } else {
     manualPositionGroup.style.display = 'none';
+    updateManualModeUI(false);
   }
 
   renderZoomSegments();
   saveZoomSegments();
 });
 
-manualXInput.addEventListener('input', () => {
+// Canvas click handler for setting manual zoom position
+canvas.addEventListener('click', e => {
   const segment = zoomSegments.find(s => s.id === selectedSegmentId);
-  if (!segment) return;
+  if (!segment || segment.mode !== 'manual') return;
 
-  segment.manualX = parseFloat(manualXInput.value);
-  saveZoomSegments();
-});
+  // Get click position relative to canvas
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
 
-manualYInput.addEventListener('input', () => {
-  const segment = zoomSegments.find(s => s.id === selectedSegmentId);
-  if (!segment) return;
+  // Convert to percentage (0-100)
+  const percentX = (x / rect.width) * 100;
+  const percentY = (y / rect.height) * 100;
 
-  segment.manualY = parseFloat(manualYInput.value);
+  // Clamp to valid range
+  segment.manualX = Math.max(0, Math.min(100, percentX));
+  segment.manualY = Math.max(0, Math.min(100, percentY));
+
+  // Update UI
+  manualXInput.value = Math.round(segment.manualX);
+  manualYInput.value = Math.round(segment.manualY);
+
+  // Update pin position
+  renderManualPositionPin();
+
+  // Save changes
   saveZoomSegments();
 });
 

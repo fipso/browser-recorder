@@ -2,8 +2,8 @@
 body {
   background: #0f172a;
   color: #fff;
-  overflow: hidden;
-  height: 100vh;
+  overflow: auto;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -554,6 +554,23 @@ select {
   width: 100%;
 }
 
+.property-control-grid input[type='number']:read-only {
+  background: #1e293b;
+  color: #94a3b8;
+  cursor: default;
+}
+
+.manual-position-hint {
+  font-size: 11px;
+  color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.1);
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  text-align: center;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
 .delete-effect-btn {
   width: 100%;
   margin-top: 12px;
@@ -565,4 +582,81 @@ select {
 
 .delete-effect-btn:hover {
   background: #dc2626;
+}
+
+/* Video canvas clickable indicator */
+.video-container.manual-mode-active {
+  cursor: crosshair;
+}
+
+.video-container.manual-mode-active::after {
+  content: '📍 Click to set zoom position';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(139, 92, 246, 0.9);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Manual position pin marker */
+.manual-position-pin {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 99;
+  background: #ef4444;
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.5);
+  animation: pinDrop 0.3s ease-out;
+}
+
+.manual-position-pin::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(239, 68, 68, 0.4);
+  border-radius: 50%;
+  animation: pinPulse 2s ease-out infinite;
+}
+
+@keyframes pinDrop {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pinPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
 }
