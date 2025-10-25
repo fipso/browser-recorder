@@ -22,6 +22,9 @@ let animationFrameId = null;
 
 // Format time helper
 function formatTime(seconds) {
+  if (!isFinite(seconds) || isNaN(seconds)) {
+    return '00:00';
+  }
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
@@ -38,8 +41,11 @@ function renderFrame() {
 
   // Update time display
   currentTimeDisplay.textContent = formatTime(hiddenVideo.currentTime);
-  const progress = (hiddenVideo.currentTime / hiddenVideo.duration) * 100;
-  progressFilled.style.width = `${progress}%`;
+
+  if (isFinite(hiddenVideo.duration) && hiddenVideo.duration > 0) {
+    const progress = (hiddenVideo.currentTime / hiddenVideo.duration) * 100;
+    progressFilled.style.width = `${progress}%`;
+  }
 
   // Continue rendering
   animationFrameId = requestAnimationFrame(renderFrame);
@@ -51,6 +57,11 @@ function loadVideo() {
     if (result.recordedVideo) {
       videoDataUrl = result.recordedVideo;
       hiddenVideo.src = videoDataUrl;
+
+      // Force the video to load metadata and buffer data
+      // This helps get the duration faster for WebM videos
+      hiddenVideo.preload = 'metadata';
+      hiddenVideo.load();
 
       // Enable controls
       playPauseBtn.disabled = false;
@@ -79,8 +90,39 @@ hiddenVideo.addEventListener('loadedmetadata', () => {
   ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
 
   // Set duration display
-  durationDisplay.textContent = formatTime(hiddenVideo.duration);
+  updateDuration();
+
+  // If duration is still Infinity, try to force it by seeking
+  if (!isFinite(hiddenVideo.duration)) {
+    // Seek to a small time to force the browser to calculate duration
+    hiddenVideo.currentTime = 0.1;
+  }
 });
+
+// Also listen for durationchange event (some videos need this)
+hiddenVideo.addEventListener('durationchange', () => {
+  updateDuration();
+});
+
+// Handle seek completion when forcing duration calculation
+hiddenVideo.addEventListener('seeked', () => {
+  // If we're not playing and we just forced a seek to get duration, go back to start
+  if (!isPlaying && hiddenVideo.currentTime > 0 && hiddenVideo.currentTime < 1) {
+    hiddenVideo.currentTime = 0;
+    // Redraw the first frame
+    setTimeout(() => {
+      ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
+      currentTimeDisplay.textContent = formatTime(0);
+    }, 50);
+  }
+});
+
+// Helper to update duration display
+function updateDuration() {
+  if (isFinite(hiddenVideo.duration) && hiddenVideo.duration > 0) {
+    durationDisplay.textContent = formatTime(hiddenVideo.duration);
+  }
+}
 
 // Play/Pause button
 playPauseBtn.addEventListener('click', () => {
@@ -125,7 +167,7 @@ hiddenVideo.addEventListener('ended', () => {
 
 // Progress bar click
 progressBar.addEventListener('click', e => {
-  if (hiddenVideo.src) {
+  if (hiddenVideo.src && isFinite(hiddenVideo.duration) && hiddenVideo.duration > 0) {
     const rect = progressBar.getBoundingClientRect();
     const pos = (e.clientX - rect.left) / rect.width;
     hiddenVideo.currentTime = pos * hiddenVideo.duration;
@@ -191,23 +233,24 @@ document.addEventListener('keydown', e => {
         break;
       case 'ArrowLeft':
         e.preventDefault();
-        hiddenVideo.currentTime = Math.max(0, hiddenVideo.currentTime - 5);
-        if (!isPlaying) {
-          setTimeout(() => {
-            ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
-          }, 100);
+        if (isFinite(hiddenVideo.duration)) {
+          hiddenVideo.currentTime = Math.max(0, hiddenVideo.currentTime - 5);
+          if (!isPlaying) {
+            setTimeout(() => {
+              ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
+            }, 100);
+          }
         }
         break;
       case 'ArrowRight':
         e.preventDefault();
-        hiddenVideo.currentTime = Math.min(
-          hiddenVideo.duration,
-          hiddenVideo.currentTime + 5
-        );
-        if (!isPlaying) {
-          setTimeout(() => {
-            ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
-          }, 100);
+        if (isFinite(hiddenVideo.duration)) {
+          hiddenVideo.currentTime = Math.min(hiddenVideo.duration, hiddenVideo.currentTime + 5);
+          if (!isPlaying) {
+            setTimeout(() => {
+              ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
+            }, 100);
+          }
         }
         break;
       case 'ArrowUp':

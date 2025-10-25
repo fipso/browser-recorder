@@ -26,10 +26,17 @@
         display: flex;
         flex-direction: column;
         padding: 20px;
+        gap: 20px;
+      }
+
+      .main-content {
+        display: flex;
+        gap: 20px;
+        height: 400px;
       }
 
       .video-container {
-        flex: 1;
+        width: 60%;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -65,17 +72,21 @@
       }
 
       .controls-panel {
-        margin-top: 20px;
+        width: 40%;
         background: #1e293b;
         border-radius: 8px;
         padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        overflow-y: auto;
       }
 
       .playback-controls {
         display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 15px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
       }
 
       button {
@@ -185,13 +196,16 @@
         display: flex;
         align-items: center;
         gap: 10px;
+        padding: 10px;
+        background: #334155;
+        border-radius: 6px;
       }
 
       .volume-slider {
-        width: 100px;
+        flex: 1;
         height: 6px;
         border-radius: 3px;
-        background: #334155;
+        background: #1e293b;
         outline: none;
         -webkit-appearance: none;
       }
@@ -219,11 +233,15 @@
         display: flex;
         align-items: center;
         gap: 10px;
+        padding: 10px;
+        background: #334155;
+        border-radius: 6px;
       }
 
       select {
+        flex: 1;
         padding: 6px 12px;
-        background: #334155;
+        background: #1e293b;
         color: #fff;
         border: none;
         border-radius: 4px;
@@ -232,7 +250,6 @@
       }
 
       .info-text {
-        margin-top: 10px;
         padding: 10px;
         background: #0f172a;
         border-radius: 4px;
@@ -240,63 +257,124 @@
         color: #94a3b8;
         text-align: center;
       }
+
+      .timeline-editor {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 20px;
+        min-height: 200px;
+      }
+
+      .timeline-editor h3 {
+        margin: 0 0 15px 0;
+        font-size: 16px;
+        color: #cbd5e1;
+        font-weight: 600;
+      }
+
+      .timeline-track {
+        background: #0f172a;
+        border-radius: 6px;
+        padding: 15px;
+        min-height: 120px;
+        position: relative;
+      }
+
+      .timeline-ruler {
+        height: 30px;
+        background: #334155;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        font-size: 11px;
+        color: #94a3b8;
+        font-family: monospace;
+      }
+
+      .timeline-placeholder {
+        text-align: center;
+        padding: 40px 20px;
+        color: #64748b;
+        font-size: 14px;
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <div class="video-container" id="videoContainer">
-        <div class="no-video" id="noVideo">
-          <h2>No Recording Available</h2>
-          <p>Record a video first using the recorder interface.</p>
+      <div class="main-content">
+        <div class="video-container" id="videoContainer">
+          <div class="no-video" id="noVideo">
+            <h2>No Recording Available</h2>
+            <p>Record a video first using the recorder interface.</p>
+          </div>
+          <canvas id="videoCanvas" style="display: none;"></canvas>
         </div>
-        <canvas id="videoCanvas" style="display: none"></canvas>
+
+        <!-- Hidden video element for frame extraction -->
+        <video id="hiddenVideo"></video>
+
+        <div class="controls-panel">
+          <div class="playback-controls">
+            <button id="playPauseBtn" class="play-pause-btn" disabled>
+              <span id="playPauseIcon">▶</span>
+              <span id="playPauseText">Play</span>
+            </button>
+            <button id="downloadBtn" class="download-btn" disabled>
+              <span>⬇</span>
+              Download
+            </button>
+            <button id="deleteBtn" class="delete-btn" disabled>
+              <span>🗑</span>
+              Delete
+            </button>
+
+            <div class="volume-control">
+              <span>🔊</span>
+              <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100" />
+            </div>
+
+            <div class="speed-control">
+              <label for="speedSelect">Speed:</label>
+              <select id="speedSelect">
+                <option value="0.25">0.25x</option>
+                <option value="0.5">0.5x</option>
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2x</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="timeline">
+            <div class="time-display">
+              <span id="currentTime">00:00</span> / <span id="duration">00:00</span>
+            </div>
+            <div class="progress-bar" id="progressBar">
+              <div class="progress-filled" id="progressFilled"></div>
+            </div>
+          </div>
+
+          <div class="info-text" id="infoText">
+            Load a recording to start playing.
+          </div>
+        </div>
       </div>
 
-      <!-- Hidden video element for frame extraction -->
-      <video id="hiddenVideo"></video>
-
-      <div class="controls-panel">
-        <div class="playback-controls">
-          <button id="playPauseBtn" class="play-pause-btn" disabled>
-            <span id="playPauseIcon">▶</span>
-            <span id="playPauseText">Play</span>
-          </button>
-          <button id="downloadBtn" class="download-btn" disabled>
-            <span>⬇</span>
-            Download
-          </button>
-          <button id="deleteBtn" class="delete-btn" disabled>
-            <span>🗑</span>
-            Delete
-          </button>
-
-          <div class="volume-control">
-            <span>🔊</span>
-            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100" />
+      <div class="timeline-editor">
+        <h3>Timeline Editor</h3>
+        <div class="timeline-track">
+          <div class="timeline-ruler">
+            <span>0:00</span>
           </div>
-
-          <div class="speed-control">
-            <label for="speedSelect">Speed:</label>
-            <select id="speedSelect">
-              <option value="0.25">0.25x</option>
-              <option value="0.5">0.5x</option>
-              <option value="0.75">0.75x</option>
-              <option value="1" selected>1x</option>
-              <option value="1.25">1.25x</option>
-              <option value="1.5">1.5x</option>
-              <option value="2">2x</option>
-            </select>
+          <div class="timeline-placeholder">
+            Timeline editing functionality - Coming soon
           </div>
         </div>
-
-        <div class="timeline">
-          <div class="time-display"><span id="currentTime">00:00</span> / <span id="duration">00:00</span></div>
-          <div class="progress-bar" id="progressBar">
-            <div class="progress-filled" id="progressFilled"></div>
-          </div>
-        </div>
-
-        <div class="info-text" id="infoText">Load a recording to start playing.</div>
       </div>
     </div>
 
