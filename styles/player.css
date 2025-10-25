@@ -29,6 +29,7 @@ body {
 
 .main-content {
   display: flex;
+  justify-content: center;
   gap: 20px;
   height: 400px;
 }
@@ -88,6 +89,7 @@ canvas {
 }
 
 button {
+  min-width: 0;
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 600;
