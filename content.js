@@ -15,27 +15,8 @@ let trackingIndicator = null;
 
 // Show visual indicator
 function showTrackingIndicator() {
-  if (trackingIndicator) return;
-
-  trackingIndicator = document.createElement('div');
-  trackingIndicator.style.cssText = `
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background: rgba(239, 68, 68, 0.9);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    z-index: 999999;
-    pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  `;
-  trackingIndicator.textContent = '🔴 Cursor Tracking Active';
-  document.body.appendChild(trackingIndicator);
-  console.log('🎯 [Content Script] Indicator shown');
+  // Indicator disabled - no visual element shown on page
+  console.log('🎯 [Content Script] Indicator disabled (not shown)');
 }
 
 function hideTrackingIndicator() {
