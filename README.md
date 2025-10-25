@@ -17,15 +17,34 @@ A simple and powerful Chrome extension for recording your screen, windows, or ta
 - **Storage**: Recordings are saved to Chrome's local storage
 - **Manifest V3**: Built with the latest Chrome extension standards
 
+## Development Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/fipso/browser-recorder.git
+   cd browser-recorder
+   ```
+
+2. Install development dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Format code (runs automatically on commit):
+   ```bash
+   npm run format
+   ```
+
 ## Installation
 
 1. Clone or download this repository
-2. Add icon files to the `icons/` directory (see icons/README.md)
+2. Install dependencies: `npm install`
+3. Add icon files to the `icons/` directory (see icons/README.md)
    - Or temporarily remove icon references from manifest.json
-3. Open Chrome and navigate to `chrome://extensions/`
-4. Enable "Developer mode" (toggle in top-right corner)
-5. Click "Load unpacked"
-6. Select the `chrome-recorder-2` directory
+4. Open Chrome and navigate to `chrome://extensions/`
+5. Enable "Developer mode" (toggle in top-right corner)
+6. Click "Load unpacked"
+7. Select the browser-recorder directory
 
 ## Usage
 
@@ -84,6 +103,27 @@ chrome-recorder-2/
   - `MediaRecorder` - Recording stream
   - `Canvas API` - Real-time preview
   - Chrome Extension APIs (tabs, storage, runtime)
+
+## Development
+
+### Code Formatting
+
+This project uses [Prettier](https://prettier.io/) for code formatting and [Husky](https://typicode.github.io/husky/) for Git hooks.
+
+- **Automatic formatting**: Code is automatically formatted on commit via pre-commit hooks
+- **Manual formatting**: Run `npm run format` to format all files
+- **Check formatting**: Run `npm run format:check` to check if files are properly formatted
+
+### Available Scripts
+
+- `npm run format` - Format all files with Prettier
+- `npm run format:check` - Check if files are formatted correctly
+- `npm run lint` - Same as format:check (alias for consistency)
+
+### Git Hooks
+
+- **Pre-commit**: Automatically formats staged files before commit
+- **Commit-msg**: Validates commit message format
 
 ## Browser Compatibility
 

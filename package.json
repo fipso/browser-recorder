@@ -1,0 +1,31 @@
+{
+  "name": "browser-recorder",
+  "version": "1.0.0",
+  "description": "A simple and powerful Chrome extension for recording your screen, windows, or tabs",
+  "main": "background.js",
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "prettier --check .",
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fipso/browser-recorder.git"
+  },
+  "keywords": [
+    "chrome-extension",
+    "screen-recorder",
+    "recording",
+    "browser"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "husky": "^8.0.3",
+    "prettier": "^3.0.3"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
