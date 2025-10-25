@@ -27,6 +27,7 @@ const cursorOffsetSlider = document.getElementById('cursorOffset');
 const cursorOffsetValue = document.getElementById('cursorOffsetValue');
 const exportFpsSelect = document.getElementById('exportFps');
 const exportBitrateSelect = document.getElementById('exportBitrate');
+const exportFormatSelect = document.getElementById('exportFormat');
 const effectPropertiesPanel = document.getElementById('effectProperties');
 const zoomStrengthSlider = document.getElementById('zoomStrength');
 const zoomStrengthValue = document.getElementById('zoomStrengthValue');
@@ -708,6 +709,7 @@ async function exportVideoWithEffects() {
   // Get export settings from UI
   const fps = parseInt(exportFpsSelect.value);
   const bitrate = parseInt(exportBitrateSelect.value);
+  const format = exportFormatSelect.value;
   const frameTime = 1 / fps;
   const totalFrames = Math.ceil(duration * fps);
 
@@ -753,8 +755,16 @@ async function exportVideoWithEffects() {
 
   // Create MediaRecorder to capture the canvas
   const stream = exportCanvas.captureStream(fps);
+
+  // Verify format is supported, fallback to VP9 if not
+  let selectedFormat = format;
+  if (!MediaRecorder.isTypeSupported(selectedFormat)) {
+    console.warn(`Format ${selectedFormat} not supported, falling back to VP9`);
+    selectedFormat = 'video/webm;codecs=vp9';
+  }
+
   const recorder = new MediaRecorder(stream, {
-    mimeType: 'video/webm;codecs=vp9',
+    mimeType: selectedFormat,
     videoBitsPerSecond: bitrate,
   });
 
@@ -842,11 +852,12 @@ async function exportVideoWithEffects() {
   });
 
   // Create blob and download
-  const blob = new Blob(chunks, { type: 'video/webm' });
+  const fileExtension = selectedFormat.startsWith('video/mp4') ? 'mp4' : 'webm';
+  const blob = new Blob(chunks, { type: selectedFormat });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `screen-recording-exported-${Date.now()}.webm`;
+  a.download = `screen-recording-exported-${Date.now()}.${fileExtension}`;
   a.click();
   URL.revokeObjectURL(url);
 
@@ -1375,45 +1386,57 @@ timelineTrack.addEventListener('click', e => {
 // Debug mode toggle
 function updateDebugVisibility() {
   if (debugMode) {
-    debugInfo.classList.remove('debug-hidden');
-    debugPanel.classList.remove('debug-hidden');
-    cursorOffsetPanel.classList.remove('debug-hidden');
+    if (debugInfo) debugInfo.classList.remove('debug-hidden');
+    if (debugPanel) debugPanel.classList.remove('debug-hidden');
+    if (cursorOffsetPanel) cursorOffsetPanel.classList.remove('debug-hidden');
   } else {
-    debugInfo.classList.add('debug-hidden');
-    debugPanel.classList.add('debug-hidden');
-    cursorOffsetPanel.classList.add('debug-hidden');
+    if (debugInfo) debugInfo.classList.add('debug-hidden');
+    if (debugPanel) debugPanel.classList.add('debug-hidden');
+    if (cursorOffsetPanel) cursorOffsetPanel.classList.add('debug-hidden');
   }
 }
 
 // Load debug mode state and cursor offset from storage
 chrome.storage.local.get(['debugMode', 'cursorTimeOffset'], result => {
   debugMode = result.debugMode || false;
-  debugModeToggle.checked = debugMode;
+  if (debugModeToggle) {
+    debugModeToggle.checked = debugMode;
+  }
 
   cursorTimeOffset = result.cursorTimeOffset || 0;
-  cursorOffsetSlider.value = cursorTimeOffset;
-  cursorOffsetValue.textContent = cursorTimeOffset.toFixed(1) + 's';
+  if (cursorOffsetSlider) {
+    cursorOffsetSlider.value = cursorTimeOffset;
+  }
+  if (cursorOffsetValue) {
+    cursorOffsetValue.textContent = cursorTimeOffset.toFixed(1) + 's';
+  }
 
   updateDebugVisibility();
 });
 
 // Handle debug mode toggle
-debugModeToggle.addEventListener('change', () => {
-  debugMode = debugModeToggle.checked;
-  chrome.storage.local.set({ debugMode: debugMode }, () => {
-    console.log('Debug mode:', debugMode ? 'enabled' : 'disabled');
+if (debugModeToggle) {
+  debugModeToggle.addEventListener('change', () => {
+    debugMode = debugModeToggle.checked;
+    chrome.storage.local.set({ debugMode: debugMode }, () => {
+      console.log('Debug mode:', debugMode ? 'enabled' : 'disabled');
+    });
+    updateDebugVisibility();
   });
-  updateDebugVisibility();
-});
+}
 
 // Handle cursor offset adjustment
-cursorOffsetSlider.addEventListener('input', () => {
-  cursorTimeOffset = parseFloat(cursorOffsetSlider.value);
-  cursorOffsetValue.textContent = cursorTimeOffset.toFixed(1) + 's';
-  chrome.storage.local.set({ cursorTimeOffset: cursorTimeOffset }, () => {
-    console.log('Cursor time offset:', cursorTimeOffset + 's');
+if (cursorOffsetSlider) {
+  cursorOffsetSlider.addEventListener('input', () => {
+    cursorTimeOffset = parseFloat(cursorOffsetSlider.value);
+    if (cursorOffsetValue) {
+      cursorOffsetValue.textContent = cursorTimeOffset.toFixed(1) + 's';
+    }
+    chrome.storage.local.set({ cursorTimeOffset: cursorTimeOffset }, () => {
+      console.log('Cursor time offset:', cursorTimeOffset + 's');
+    });
   });
-});
+}
 
 // Load video on page load
 loadVideo();
