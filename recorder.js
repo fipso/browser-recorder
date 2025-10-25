@@ -8,6 +8,7 @@ let recordedTabId = null;
 let recordedTabIds = []; // Track multiple tabs for window/monitor mode
 let cursorTrackingData = [];
 let cursorViewportDimensions = { width: 0, height: 0 }; // Viewport dimensions from tracked tab
+let currentTrackingMode = 'tab'; // Store tracking mode for reinjection after navigation
 
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -138,7 +139,9 @@ startBtn.addEventListener('click', async () => {
         if (recordedTabIds.length > 0 || recordedTabId) {
           (async () => {
             try {
-              let allCursorData = [];
+              // Start with any data already accumulated during navigation
+              let allCursorData = [...cursorTrackingData];
+              console.log(`📊 Starting with ${allCursorData.length} cursor points from navigation events`);
 
               // If we tracked multiple tabs (window/monitor mode), collect from all
               if (recordedTabIds.length > 0) {
@@ -313,6 +316,7 @@ startBtn.addEventListener('click', async () => {
         // Determine tracking mode based on what's being shared
         const trackingMode =
           settings.displaySurface === 'browser' ? 'tab' : 'window';
+        currentTrackingMode = trackingMode; // Store for later use
         console.log('Tracking mode:', trackingMode);
 
         // Try to find the tab that matches the shared content
@@ -500,11 +504,42 @@ startBtn.addEventListener('click', async () => {
       }
     };
 
-    // Listen for tab updates (reloads) and reinject tracking script
+    // Listen for navigation BEFORE it happens to collect cursor data
+    const navigationListener = (details) => {
+      const tabId = details.tabId;
+      const isTrackedTab = recordedTabIds.includes(tabId) || tabId === recordedTabId;
+
+      // Only handle main frame navigations (not iframes)
+      if (isTrackedTab && details.frameId === 0) {
+        console.log(`🔄 Tab ${tabId} is about to navigate, collecting cursor data...`);
+
+        (async () => {
+          try {
+            // Collect cursor data from the current page BEFORE navigation
+            const response = await chrome.tabs.sendMessage(tabId, {
+              action: 'stopCursorTracking',
+            });
+            if (response && response.cursorData && response.cursorData.length > 0) {
+              console.log(`  ✅ Collected ${response.cursorData.length} cursor points before navigation`);
+              // Merge with existing data
+              cursorTrackingData = cursorTrackingData.concat(response.cursorData);
+              // Sort by time
+              cursorTrackingData.sort((a, b) => a.time - b.time);
+              console.log(`  📊 Total accumulated: ${cursorTrackingData.length} cursor points`);
+            }
+          } catch (error) {
+            console.log(`  ℹ️ Could not collect cursor data:`, error.message);
+          }
+        })();
+      }
+    };
+
+    // Listen for page load complete to reinject script
     const tabUpdateListener = (tabId, changeInfo, tab) => {
-      // Check if this is one of our tracked tabs and it just finished loading
-      if (recordedTabIds.includes(tabId) && changeInfo.status === 'complete') {
-        console.log(`🔄 Tab ${tabId} reloaded, reinjecting tracking script...`);
+      const isTrackedTab = recordedTabIds.includes(tabId) || tabId === recordedTabId;
+
+      if (isTrackedTab && changeInfo.status === 'complete') {
+        console.log(`🔄 Tab ${tabId} navigation complete, reinjecting tracking script...`);
 
         (async () => {
           try {
@@ -517,11 +552,11 @@ startBtn.addEventListener('click', async () => {
             // Wait a bit for initialization
             await new Promise(resolve => setTimeout(resolve, 300));
 
-            // Restart tracking (use 'tab' mode as fallback since we don't know the original mode)
+            // Restart tracking with the same tracking mode
             await chrome.tabs.sendMessage(tabId, {
               action: 'startCursorTracking',
               recordingStartTime: startTime,
-              trackingMode: 'tab',
+              trackingMode: currentTrackingMode,
             });
 
             console.log(`✅ Reinjected and restarted tracking in tab ${tabId}`);
@@ -535,10 +570,12 @@ startBtn.addEventListener('click', async () => {
       }
     };
 
-    // Add the listener
+    // Add both listeners
+    chrome.webNavigation.onBeforeNavigate.addListener(navigationListener);
     chrome.tabs.onUpdated.addListener(tabUpdateListener);
 
-    // Store the listener reference so we can remove it later
+    // Store the listener references so we can remove them later
+    window.navigationListener = navigationListener;
     window.tabUpdateListener = tabUpdateListener;
   } catch (error) {
     console.error('Error starting recording:', error);
@@ -571,6 +608,13 @@ function stopRecording() {
   if (mediaRecorder && mediaRecorder.state === 'recording') {
     mediaRecorder.stop();
     stopTimer();
+
+    // Remove navigation listener
+    if (window.navigationListener) {
+      chrome.webNavigation.onBeforeNavigate.removeListener(window.navigationListener);
+      window.navigationListener = null;
+      console.log('🔴 Removed navigation listener');
+    }
 
     // Remove tab update listener
     if (window.tabUpdateListener) {
