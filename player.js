@@ -331,7 +331,6 @@ function playVideo() {
   hiddenVideo.play();
   isPlaying = true;
   playPauseIcon.textContent = '⏸';
-  playPauseText.textContent = 'Pause';
   renderFrame();
 }
 
@@ -339,7 +338,6 @@ function pauseVideo() {
   hiddenVideo.pause();
   isPlaying = false;
   playPauseIcon.textContent = '▶';
-  playPauseText.textContent = 'Play';
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
