@@ -81,6 +81,7 @@ startBtn.addEventListener('click', async () => {
 
     mediaRecorder.onstop = () => {
       const blob = new Blob(recordedChunks, { type: 'video/webm' });
+      const endTime = Date.now();
 
       // Save to chrome.storage
       const reader = new FileReader();
@@ -89,7 +90,10 @@ startBtn.addEventListener('click', async () => {
         chrome.storage.local.set(
           {
             recordedVideo: base64data,
-            timestamp: Date.now(),
+            timestamp: endTime,
+            recordingStartTime: startTime,
+            recordingEndTime: endTime,
+            recordingDuration: (endTime - startTime) / 1000, // Duration in seconds
           },
           () => {
             console.log('Video saved to storage');
