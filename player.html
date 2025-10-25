@@ -6,6 +6,7 @@
     <title>Video Player</title>
     <link rel="stylesheet" href="styles/shared.css" />
     <link rel="stylesheet" href="styles/player.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
     <style>
       /* Debug mode specific styles */
       .debug-toggle {
@@ -43,6 +44,10 @@
   </head>
   <body>
     <div class="container">
+      <div class="header-left">
+        <img src="./icons/logo.png" alt="Browser Recorder" />
+        <h1>Browser Recorder</h1>
+      </div>
       <div class="main-content">
         <div class="video-container" id="videoContainer">
           <div class="no-video" id="noVideo">
@@ -57,10 +62,6 @@
 
         <div class="controls-panel">
           <div class="playback-controls">
-            <button id="playPauseBtn" class="play-pause-btn" disabled>
-              <span id="playPauseIcon">▶</span>
-              <span id="playPauseText">Play</span>
-            </button>
             <button id="downloadBtn" class="download-btn" disabled>
               <span>⬇</span>
               Download
@@ -110,12 +111,66 @@
       </div>
 
       <div class="timeline-editor">
-        <div class="timeline-editor-header">
-          <h3>Timeline Editor</h3>
-          <div class="timeline-time-display">
-            <div class="time-display">Current: <span id="currentTime">00:00</span></div>
-            <div class="time-display">Duration: <span id="duration">00:00</span></div>
+        <div class="timeline-controls">
+          <div class="timeline-control">
+            <button id="playPauseBtn" class="play-pause-btn" disabled>
+              <h1 id="playPauseIcon">▶</h1>
+            </button>
+
+            <div class="timeline-time-display">
+              <div class="time-display">
+                <h3 id="currentTime">00:00</h3>
+              </div>
+
+              <div class="time-display">
+                <h3 id="duration">00:00</h3>
+              </div>
+            </div>
           </div>
+
+          <div class="timeline-control">
+            <div class="volume-control">
+              <span>
+                <h1 class="bi bi-volume-up-fill"></h1>
+              </span>
+              <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100" />
+            </div>
+          </div>
+
+          <div class="timeline-control">
+            <div class="speed-control">
+              <label for="speedSelect">
+                <h1 class="bi bi-speedometer"></h1>
+              </label>
+              <select id="speedSelect">
+                <option value="0.25">0.25x</option>
+                <option value="0.5">0.5x</option>
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2x</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="button-actions">
+            <button id="deleteBtn" class="delete-btn" disabled>
+              <h1 class="bi bi-trash3-fill"></h1>
+            </button>
+
+            <button id="downloadBtn" class="download-btn" disabled>
+              <h1 class="bi bi-cloud-download-fill"></h1>
+            </button>
+          </div>
+        </div>
+
+        <hr />
+
+        <br />
+
+        <div class="timeline-editor-header">
+          <h1>Timeline Editor</h1>
         </div>
         <div class="timeline-controls">
           <button class="add-zoom-btn" id="addZoomBtn">+ Add Zoom Effect</button>
