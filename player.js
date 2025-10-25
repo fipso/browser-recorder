@@ -51,6 +51,10 @@ let resizeHandle = null; // Which handle is being used ('left' or 'right')
 let dragStartX = 0; // Starting X position for drag
 let dragStartTime = 0; // Starting time for segment being dragged/resized
 
+if (debugMode) {
+  document.getElementById('debug-consoles').classList.remove('hidden');
+}
+
 // Format time helper
 function formatTime(seconds) {
   if (!isFinite(seconds) || isNaN(seconds)) {

@@ -61,19 +61,6 @@
         <video id="hiddenVideo"></video>
 
         <div class="controls-panel">
-          <div class="playback-controls">
-            <button id="downloadBtn" class="download-btn" disabled>
-              <span>⬇</span>
-              Download
-            </button>
-            <button id="deleteBtn" class="delete-btn" disabled>
-              <span>🗑</span>
-              Delete
-            </button>
-          </div>
-
-          <div class="info-text" id="infoText">Load a recording to start playing.</div>
-
           <!-- Effect Properties Panel -->
           <div class="effect-properties" id="effectProperties" style="display: none">
             <h4>Effect Properties</h4>
@@ -165,29 +152,24 @@
           </div>
         </div>
 
-        <hr />
-
-        <br />
-
-        <div class="timeline-editor-header">
-          <h1>Timeline Editor</h1>
-        </div>
         <div class="timeline-controls">
           <button class="add-zoom-btn" id="addZoomBtn">+ Add Zoom Effect</button>
           <div class="debug-info" id="debugInfo"></div>
         </div>
-        <div class="debug-panel" id="debugPanel"></div>
-        <div class="debug-panel debug-hidden" id="cursorOffsetPanel">
-          <h4>Cursor Timing Adjustment</h4>
-          <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px">
-            <label for="cursorOffset">Offset (seconds):</label>
-            <input type="range" id="cursorOffset" min="-2" max="2" step="0.1" value="0" style="flex: 1" />
-            <span id="cursorOffsetValue">0.0s</span>
+        <span id="debug-consoles" class="hidden">
+          <div class="debug-panel" id="debugPanel"></div>
+          <div class="debug-panel debug-hidden" id="cursorOffsetPanel">
+            <h4>Cursor Timing Adjustment</h4>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px">
+              <label for="cursorOffset">Offset (seconds):</label>
+              <input type="range" id="cursorOffset" min="-2" max="2" step="0.1" value="0" style="flex: 1" />
+              <span id="cursorOffsetValue">0.0s</span>
+            </div>
+            <div style="margin-top: 5px; font-size: 10px; color: #64748b">
+              Adjust if cursor is ahead (+) or behind (-) the video
+            </div>
           </div>
-          <div style="margin-top: 5px; font-size: 10px; color: #64748b">
-            Adjust if cursor is ahead (+) or behind (-) the video
-          </div>
-        </div>
+        </span>
         <div class="timeline-track" id="timelineTrack">
           <div class="timeline-scale" id="timelineScale"></div>
           <div class="timeline-content">
