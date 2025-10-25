@@ -16,36 +16,41 @@
 
       <div class="canvas-container">
         <canvas id="preview"></canvas>
+        <div class="info" id="info">Click "Start Recording" to select a screen, window, or tab to record.</div>
+      </div>
+
+      <div class="status status-left">
+        <span id="statusText">Ready</span>
+        <div id="recordingIndicator" class="recording-indicator hidden"></div>
+        <span id="timer" class="hidden">00:00</span>
       </div>
 
       <div class="controls">
-        <button id="startBtn" class="button-primary">
-          <span>▶</span>
-          Start Recording
-        </button>
-        <button id="stopBtn" class="button-danger" disabled>
-          <span>■</span>
-          Stop Recording
-        </button>
-        <button id="downloadBtn" class="button-info" disabled>
-          <span>⬇</span>
-          Download
-        </button>
-        <button id="playBtn" class="button-info" disabled>
-          <span>▶</span>
-          Open Player
-        </button>
-
-        <div class="status">
-          <span id="statusText">Ready</span>
-          <div id="recordingIndicator" class="recording-indicator hidden"></div>
-          <span id="timer" class="timer hidden">00:00</span>
+        <div style="display: flex; gap: 30px">
+          <button id="startBtn" class="button-primary">
+            <span>▶</span>
+            Start Recording
+          </button>
+          <button id="stopBtn" class="button-primary" disabled>
+            <span>■</span>
+            Stop Recording
+          </button>
+        </div>
+        <div style="display: flex; gap: 30px">
+          <button id="downloadBtn" class="button-info" disabled>
+            <span>⬇</span>
+            Download
+          </button>
+          <button id="playBtn" class="button-info" disabled>
+            <span>▶</span>
+            Open Player
+          </button>
         </div>
       </div>
-
-      <div class="info" id="info">Click "Start Recording" to select a screen, window, or tab to record.</div>
     </div>
 
+    <p class="copyright">Copyright © Browser Recorder 2025</p>
+    <a href="https://example.com" class="visit-site-link">Visit our Website</a>
     <script src="recorder.js"></script>
   </body>
 </html>

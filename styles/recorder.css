@@ -20,6 +20,7 @@ body {
   width: 100%;
   max-width: 1200px;
   height: 60vh;
+  margin-top: 10px;
   max-height: 600px;
   display: flex;
   align-items: center;
@@ -27,8 +28,6 @@ body {
   background: #000;
   border-radius: 8px;
   overflow: hidden;
-  margin: 20px;
-  /* margin-bottom: 20px; */
 }
 
 canvas {
@@ -39,10 +38,10 @@ canvas {
 
 .controls {
   display: flex;
-  gap: 15px;
-  align-items: center;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
 }
 
 /* Recorder-specific button overrides */
@@ -50,18 +49,11 @@ button {
   padding: 12px 24px;
   font-size: 16px;
   border-radius: 6px;
+  white-space: nowrap;
 }
 
 button:hover {
   transform: translateY(-1px);
-}
-
-.status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: #9ca3af;
 }
 
 .recording-indicator {
@@ -86,15 +78,26 @@ button:hover {
   font-family: 'Courier New', monospace;
   font-size: 18px;
   font-weight: bold;
-  color: #fff;
 }
 
 .info {
-  margin-top: 10px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   padding: 12px 20px;
-  background: #374151;
+  background: #aeecab;
   border-radius: 6px;
   font-size: 14px;
   text-align: center;
   max-width: 600px;
+  color: #354e3d;
+  z-index: 10;
+}
+
+.status-left {
+  justify-content: end;
+  width: 100%;
+  max-width: 1200px;
+  padding: 10px 0;
 }

@@ -120,6 +120,7 @@ startBtn.addEventListener('click', async () => {
           console.log('Video saved to storage');
           downloadBtn.disabled = false;
           playBtn.disabled = false;
+          infoElement.style.display = 'block';
           infoElement.textContent =
             'Recording saved! You can download it or open it in the player.';
         });
@@ -180,7 +181,7 @@ startBtn.addEventListener('click', async () => {
     statusText.textContent = 'Recording';
     recordingIndicator.style.display = 'block';
     timerElement.style.display = 'block';
-    infoElement.textContent = 'Recording in progress...';
+    infoElement.style.display = 'none';
 
     // Start cursor tracking in background (non-blocking)
     (async () => {
@@ -359,6 +360,7 @@ function stopRecording() {
     stopBtn.disabled = true;
     statusText.textContent = 'Stopped';
     recordingIndicator.style.display = 'none';
+    infoElement.style.display = 'block';
   }
 }
 
