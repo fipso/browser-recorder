@@ -6,6 +6,9 @@ let isTrackingCursor = false;
 let cursorData = [];
 let recordingStartTime = null;
 let lastCursorPosition = { x: 0, y: 0 };
+let viewportWidth = 0;
+let viewportHeight = 0;
+let trackingMode = 'tab'; // 'tab' or 'window' - determines coordinate system
 
 // Visual indicator
 let trackingIndicator = null;
@@ -50,9 +53,24 @@ function handleMouseMove(e) {
   const currentTime = Date.now();
   const relativeTime = (currentTime - recordingStartTime) / 1000; // Convert to seconds
 
+  // For window/fullscreen mode, use screen coordinates relative to window
+  // For tab mode, use viewport coordinates
+  let cursorX, cursorY;
+  if (trackingMode === 'window') {
+    // Use pageX/pageY which includes scroll offset, then add window position
+    // Note: We can't get actual window screen position from content script
+    // So we use screenX/Y which is relative to the screen
+    cursorX = e.screenX;
+    cursorY = e.screenY;
+  } else {
+    // Tab mode: use viewport coordinates
+    cursorX = e.clientX;
+    cursorY = e.clientY;
+  }
+
   lastCursorPosition = {
-    x: e.clientX,
-    y: e.clientY,
+    x: cursorX,
+    y: cursorY,
     time: relativeTime,
   };
 
@@ -62,8 +80,8 @@ function handleMouseMove(e) {
     relativeTime - cursorData[cursorData.length - 1].time >= 0.1
   ) {
     cursorData.push({
-      x: e.clientX,
-      y: e.clientY,
+      x: cursorX,
+      y: cursorY,
       time: relativeTime,
     });
 
@@ -83,9 +101,18 @@ function handleClick(e) {
   const currentTime = Date.now();
   const relativeTime = (currentTime - recordingStartTime) / 1000;
 
+  let cursorX, cursorY;
+  if (trackingMode === 'window') {
+    cursorX = e.screenX;
+    cursorY = e.screenY;
+  } else {
+    cursorX = e.clientX;
+    cursorY = e.clientY;
+  }
+
   cursorData.push({
-    x: e.clientX,
-    y: e.clientY,
+    x: cursorX,
+    y: cursorY,
     time: relativeTime,
     type: 'click',
   });
@@ -101,7 +128,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('🎯 [Content Script] Starting cursor tracking...');
     isTrackingCursor = true;
     cursorData = [];
-    recordingStartTime = Date.now();
+    // Use the recording start time passed from recorder, or current time as fallback
+    recordingStartTime = message.recordingStartTime || Date.now();
+    console.log(
+      '🎯 [Content Script] Recording start time:',
+      recordingStartTime
+    );
+
+    // Set tracking mode (tab vs window/fullscreen)
+    trackingMode = message.trackingMode || 'tab';
+    console.log('🎯 [Content Script] Tracking mode:', trackingMode);
+
+    // Capture viewport/screen dimensions at start of recording
+    if (trackingMode === 'window') {
+      viewportWidth = window.screen.width;
+      viewportHeight = window.screen.height;
+      console.log(
+        `🎯 [Content Script] Screen: ${viewportWidth}x${viewportHeight}`
+      );
+    } else {
+      viewportWidth = window.innerWidth;
+      viewportHeight = window.innerHeight;
+      console.log(
+        `🎯 [Content Script] Viewport: ${viewportWidth}x${viewportHeight}`
+      );
+    }
 
     document.addEventListener('mousemove', handleMouseMove, true);
     document.addEventListener('click', handleClick, true);
@@ -125,6 +176,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log(
       `🎯 [Content Script] ✅ Cursor tracking STOPPED. Collected ${cursorData.length} points`
     );
+    console.log(
+      `🎯 [Content Script] Viewport was: ${viewportWidth}x${viewportHeight}`
+    );
     if (cursorData.length > 0) {
       console.log('🎯 [Content Script] First point:', cursorData[0]);
       console.log(
@@ -136,7 +190,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         '🎯 [Content Script] ⚠️ NO CURSOR DATA COLLECTED! Did you move the mouse on this page?'
       );
     }
-    sendResponse({ status: 'stopped', cursorData: cursorData });
+    sendResponse({
+      status: 'stopped',
+      cursorData: cursorData,
+      viewportWidth: viewportWidth,
+      viewportHeight: viewportHeight,
+    });
   } else if (message.action === 'getCursorData') {
     console.log(
       '🎯 [Content Script] Sending cursor data:',

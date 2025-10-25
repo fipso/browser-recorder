@@ -6,6 +6,40 @@
     <title>Video Player</title>
     <link rel="stylesheet" href="styles/shared.css" />
     <link rel="stylesheet" href="styles/player.css" />
+    <style>
+      /* Debug mode specific styles */
+      .debug-toggle {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #1e293b;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        color: #cbd5e1;
+        cursor: pointer;
+        user-select: none;
+        z-index: 1000;
+        border: 1px solid #334155;
+      }
+
+      .debug-toggle:hover {
+        background: #334155;
+      }
+
+      .debug-toggle input[type='checkbox'] {
+        cursor: pointer;
+        width: 14px;
+        height: 14px;
+      }
+
+      .debug-hidden {
+        display: none !important;
+      }
+    </style>
   </head>
   <body>
     <div class="container">
@@ -72,6 +106,17 @@
           <div class="debug-info" id="debugInfo"></div>
         </div>
         <div class="debug-panel" id="debugPanel"></div>
+        <div class="debug-panel debug-hidden" id="cursorOffsetPanel">
+          <h4>Cursor Timing Adjustment</h4>
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px">
+            <label for="cursorOffset">Offset (seconds):</label>
+            <input type="range" id="cursorOffset" min="-2" max="2" step="0.1" value="0" style="flex: 1" />
+            <span id="cursorOffsetValue">0.0s</span>
+          </div>
+          <div style="margin-top: 5px; font-size: 10px; color: #64748b">
+            Adjust if cursor is ahead (+) or behind (-) the video
+          </div>
+        </div>
         <div class="timeline-track" id="timelineTrack">
           <div class="playhead" id="playhead">
             <div class="playhead-handle" id="playheadHandle">
@@ -85,6 +130,11 @@
         </div>
       </div>
     </div>
+
+    <label class="debug-toggle">
+      <input type="checkbox" id="debugModeToggle" />
+      Debug Mode
+    </label>
 
     <script src="player.js"></script>
   </body>
