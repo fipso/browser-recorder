@@ -76,6 +76,23 @@
               <option value="follow">Follow Cursor</option>
               <option value="manual">Manual Position</option>
             </select>
+            <div
+              class="zoom-mode-warning"
+              id="zoomModeWarning"
+              style="
+                display: none;
+                margin-top: 8px;
+                padding: 8px;
+                background: #fef3c7;
+                border: 1px solid #fbbf24;
+                border-radius: 4px;
+                font-size: 11px;
+                color: #78350f;
+              "
+            >
+              ⚠️ Follow Cursor mode is experimental when recording the whole window or screen. It is only stable when
+              recording inside a tab.
+            </div>
           </div>
           <div class="property-group manual-mode-only" id="manualPositionGroup" style="display: none">
             <label>Zoom Position:</label>

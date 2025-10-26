@@ -32,6 +32,7 @@ const effectPropertiesPanel = document.getElementById('effectProperties');
 const zoomStrengthSlider = document.getElementById('zoomStrength');
 const zoomStrengthValue = document.getElementById('zoomStrengthValue');
 const zoomModeSelect = document.getElementById('zoomMode');
+const zoomModeWarning = document.getElementById('zoomModeWarning');
 const manualPositionGroup = document.getElementById('manualPositionGroup');
 const manualXInput = document.getElementById('manualX');
 const manualYInput = document.getElementById('manualY');
@@ -155,16 +156,10 @@ function updateZoomState(zoomState, currentTime, skipIfEditing = false) {
         targetX = cursor.x;
         targetY = cursor.y;
 
-        // Smooth camera movement - only move if cursor moved significantly
-        const distanceX = Math.abs(targetX - zoomState.x);
-        const distanceY = Math.abs(targetY - zoomState.y);
-        const threshold = 50;
-
-        if (distanceX > threshold || distanceY > threshold) {
-          const smoothFactor = 0.1;
-          zoomState.x += (targetX - zoomState.x) * smoothFactor;
-          zoomState.y += (targetY - zoomState.y) * smoothFactor;
-        }
+        // Smooth camera movement to follow cursor
+        const smoothFactor = 0.1;
+        zoomState.x += (targetX - zoomState.x) * smoothFactor;
+        zoomState.y += (targetY - zoomState.y) * smoothFactor;
       }
     }
   } else {
@@ -571,12 +566,26 @@ hiddenVideo.addEventListener('loadedmetadata', () => {
   canvas.width = hiddenVideo.videoWidth;
   canvas.height = hiddenVideo.videoHeight;
 
-  // Show canvas
-  canvas.style.display = 'block';
-  noVideo.style.display = 'none';
+  // Initialize zoom center
+  currentZoom.x = hiddenVideo.videoWidth / 2;
+  currentZoom.y = hiddenVideo.videoHeight / 2;
 
-  // Draw first frame
-  ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
+  // Show canvas
+  canvas.classList.remove('hidden');
+  noVideo.style.display = 'none';
+});
+
+// Draw first frame when video data is loaded
+hiddenVideo.addEventListener('loadeddata', () => {
+  // Seek to beginning to ensure frame is available
+  hiddenVideo.currentTime = 0;
+});
+
+// Draw frame after seeking
+hiddenVideo.addEventListener('seeked', () => {
+  if (!isPlaying) {
+    drawVideoWithZoom(ctx, canvas, hiddenVideo, currentZoom);
+  }
 });
 
 // Play/Pause button
@@ -898,7 +907,7 @@ deleteBtn.addEventListener('click', () => {
       ],
       () => {
         hiddenVideo.src = '';
-        canvas.style.display = 'none';
+        canvas.classList.add('hidden');
         noVideo.style.display = 'block';
         playPauseBtn.disabled = true;
         exportBtn.disabled = true;
@@ -1185,10 +1194,12 @@ function updatePropertiesPanel() {
   // Show/hide manual position controls and update UI
   if (segment.mode === 'manual') {
     manualPositionGroup.style.display = 'block';
+    zoomModeWarning.style.display = 'none';
     updateManualModeUI(true);
     renderManualPositionPin();
   } else {
     manualPositionGroup.style.display = 'none';
+    zoomModeWarning.style.display = 'block';
     updateManualModeUI(false);
   }
 }
@@ -1319,10 +1330,12 @@ zoomModeSelect.addEventListener('change', () => {
   // Show/hide manual position controls and update UI
   if (segment.mode === 'manual') {
     manualPositionGroup.style.display = 'block';
+    zoomModeWarning.style.display = 'none';
     updateManualModeUI(true);
     renderManualPositionPin();
   } else {
     manualPositionGroup.style.display = 'none';
+    zoomModeWarning.style.display = 'block';
     updateManualModeUI(false);
   }
 

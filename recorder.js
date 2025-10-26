@@ -260,7 +260,7 @@ startBtn.addEventListener('click', async () => {
                     console.log(
                       `💾 Viewport dimensions: ${cursorViewportDimensions.width}x${cursorViewportDimensions.height}`
                     );
-                    infoElement.textContent = `Recording saved with ${cursorTrackingData.length} cursor points! You can download it or open it in the player.`;
+                    infoElement.textContent = `Recording saved! You can download it or open it in the player.`;
                   }
                 );
               } else {
